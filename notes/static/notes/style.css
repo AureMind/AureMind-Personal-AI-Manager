@@ -1,4 +1,16 @@
-.navbar-brand img {
-  height: 40px;
-  width: auto;
+.navbar {
+  height: 70px;
+  padding: 0 1rem;
+  position: relative;
+  overflow: visible;
+  background-color: transparent !important;
+}
+
+.navbar-logo {
+  height: 250px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) translateX(40px);
+  left: 0;
+  z-index: 10;
 }
