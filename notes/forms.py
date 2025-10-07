@@ -4,8 +4,7 @@ from .models import Note
 class NoteForm(forms.ModelForm):
     class Meta:
         model = Note
-        fields = ['title', 'content']
+        fields = ['title', 'content', 'due_date', 'attachment']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
+            'due_date': forms.DateInput(attrs={'type': 'date'}),
         }
