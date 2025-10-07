@@ -6,6 +6,11 @@
   background-color: transparent !important;
 }
 
+.nav-items {
+  margin-left: 225px; /* push nav items right, adjust to your logo width */
+}
+
+
 .navbar-logo {
   height: 250px;
   position: absolute;
@@ -13,4 +18,22 @@
   transform: translateY(-50%) translateX(40px);
   left: 0;
   z-index: 10;
+}
+
+footer {
+  background-color: #f8f9fa;
+  padding: 1rem 0;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+footer a {
+  color: #0d6efd;
+  text-decoration: none;
+  margin: 0 0.5rem;
+}
+
+footer a:hover {
+  text-decoration: underline;
 }

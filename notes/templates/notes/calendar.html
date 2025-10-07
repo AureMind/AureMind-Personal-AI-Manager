@@ -1,6 +1,23 @@
 {% extends 'notes/base.html' %}
+{% load static %}
+{% load number_range %}
+
 {% block title %}Calendar{% endblock %}
+
 {% block content %}
-<h1>Calendar</h1>
-<p>Coming soon...</p>
+<h1>Calendar - {{ month }}/{{ year }}</h1>
+
+<div class="row">
+  {% for day in 1|to:total_days %}
+    <div class="col-1 border p-2 mb-2 {% if day == today_day %}bg-warning{% endif %}">
+      <strong>{{ day }}</strong><br>
+      {% if day in calendar_notes %}
+        {% for note in calendar_notes.day %}
+          <div class="badge bg-primary mb-1">{{ note.title }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
 {% endblock %}

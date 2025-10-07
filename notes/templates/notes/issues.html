@@ -1,6 +1,19 @@
-{% extends 'notes/base.html' %}
-{% block title %}Calendar{% endblock %}
+{% extends "notes/base.html" %}
+{% block title %}Issues{% endblock %}
+
 {% block content %}
-<h1>Issues</h1>
-<p>Coming soon...</p>
+<h1>Upcoming Deadlines</h1>
+
+{% if notes_with_due_dates %}
+  <ul class="list-group">
+    {% for note in notes_with_due_dates %}
+      <li class="list-group-item">
+        <strong>Note:</strong> <a href="{% url 'notes:detail' pk=note.pk %}">{{ note.title }}</a><br>
+        <strong>Due Date:</strong> {{ note.due_date|date:"M d, Y" }}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No deadlines found!</p>
+{% endif %}
 {% endblock %}
