@@ -1,0 +1,21 @@
+{% extends 'notes/base.html' %}
+{% block title %}{% if note %}Edit{% else %}Create{% endif %} Note{% endblock %}
+{% block content %}
+<h1>{% if note %}Edit{% else %}Create{% endif %} Note</h1>
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="mb-3">
+    {{ form.title.label_tag }}
+    {{ form.title }}
+    {{ form.title.errors }}
+  </div>
+  <div class="mb-3">
+    {{ form.content.label_tag }}
+    {{ form.content }}
+    {{ form.content.errors }}
+  </div>
+  <button class="btn btn-primary" type="submit">Save</button>
+  <a class="btn btn-link" href="{% url 'notes:home' %}">Cancel</a>
+</form>
+{% endblock %}
