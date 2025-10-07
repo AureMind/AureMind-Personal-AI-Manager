@@ -88,3 +88,6 @@ def issues(request):
 @login_required
 def files(request):
     return render(request, 'notes/files.html')
+
+def about(request):
+    return render(request, 'notes/about.html')
