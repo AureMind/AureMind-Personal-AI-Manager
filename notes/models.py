@@ -11,3 +11,10 @@ class Note(models.Model):
 
     def __str__(self):
         return self.title
+
+class TimeSchedule(models.Model):
+    note = models.OneToOneField(Note, on_delete=models.CASCADE, primary_key=True)
+    due_date = models.DateField()
+
+    def __str__(self):
+        return f"Schedule for {self.note.title}"

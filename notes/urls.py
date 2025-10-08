@@ -5,9 +5,9 @@ from . import views
 app_name = 'notes'
 
 urlpatterns = [
-    path('', views.home, name='home'),
+    path('', views.dashboard, name='dashboard'),
     
-    path('dashboard/', views.dashboard, name='dashboard'),
+    path('notes/', views.home, name='home'),
     path('calendar/', views.calendar_view, name='calendar'),
     path('issues/', views.issues, name='issues'),
     path('files/', views.files, name='files'),
