@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
-from .models import Note,TimeSchedule
-from .forms import NoteForm,TimeScheduleForm
+from .models import Note, Task
+from .forms import NoteForm, TimeScheduleForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
@@ -24,7 +24,7 @@ def home(request):
         'q': q,
         'year': datetime.now().year,
     }
-    return render(request, 'notes/home.html', context)
+    return render(request, 'notes/dashboard.html', context)
 
 
 @login_required
@@ -35,7 +35,7 @@ def note_create(request):
             note = form.save(commit=False)
             note.user = request.user
             note.save()
-            return redirect('notes:home')
+            return redirect('notes:dashboard')
         else:
             return render(request, 'notes/note_form.html', {'form': form})
     else:
@@ -62,7 +62,7 @@ def note_delete(request, pk):
     note = get_object_or_404(Note, pk=pk)
     if request.method == 'POST':
         note.delete()
-        return redirect('notes:home')
+        return redirect('notes:dashboard')
     return render(request, 'notes/confirm_delete.html', {'note': note})
 
 def note_detail(request, pk):
@@ -110,12 +110,28 @@ def calendar_view(request, year=None, month=None):
     return render(request, 'notes/calendar.html', context)
 
 @login_required
-def issues(request):
+def task(request):
     notes_with_due_dates = Note.objects.filter(user=request.user).exclude(due_date__isnull=True).order_by('due_date')
     context = {
         'notes_with_due_dates': notes_with_due_dates,
     }
-    return render(request, 'notes/issues.html', context)
+    return render(request, 'notes/task.html', context)
+
+@login_required
+def note(request):
+    q = request.GET.get('q', '')
+    notes = Note.objects.filter(user=request.user)
+    if q:
+        notes = notes.filter(Q(title__icontains=q) | Q(content__icontains=q))
+    paginator = Paginator(notes.order_by('-created_at'), 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context = {
+        'page_obj': page_obj,
+        'q': q,
+        'year': datetime.now().year,
+    }
+    return render(request, 'notes/note.html', context)
 
 @login_required
 def files(request):

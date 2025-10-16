@@ -5,11 +5,11 @@ from . import views
 app_name = 'notes'
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),
+    path('', views.home, name='dashboard'),
     
-    path('notes/', views.home, name='home'),
+    path('notes/', views.note, name='note'),
     path('calendar/', views.calendar_view, name='calendar'),
-    path('issues/', views.issues, name='issues'),
+    path('task/', views.task, name='task'),
     path('files/', views.files, name='files'),
 
     # Auth routes
