@@ -5,10 +5,10 @@ from .forms import NoteForm, TimeScheduleForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
-from datetime import datetime
-from datetime import date
+from datetime import datetime , date, time
 from calendar import monthrange
 from django.db.models import Q
+
 
 @login_required
 def home(request):
@@ -87,23 +87,36 @@ def dashboard(request):
     context = {'total_notes': total_notes}
     return render(request, 'notes/dashboard.html', context)
 
+
 @login_required
 def calendar_view(request, year=None, month=None):
     today = date.today()
     year = int(year) if year else today.year
     month = int(month) if month else today.month
-    notes = Note.objects.filter(user=request.user, due_date__year=year, due_date__month=month)
-    calendar_notes = {}
-    for note in notes:
-        day = note.due_date.day
-        if day not in calendar_notes:
-            calendar_notes[day] = []
-        calendar_notes[day].append(note)
+
+    # 1. Fetch only tasks, and order them by time
+    tasks = Task.objects.filter(
+        user=request.user, 
+        due_date__year=year, 
+        due_date__month=month
+    ).order_by('due_date') # order_by also sorts by time
+
+    # 2. Create the new calendar structure
+    calendar_tasks = {}
+    
+    # Add tasks to the structure
+    for task in tasks:
+        day = task.due_date.day
+        if day not in calendar_tasks:
+            calendar_tasks[day] = []
+        calendar_tasks[day].append(task) # Add the whole task object
+
     total_days = monthrange(year, month)[1]
+    
     context = {
         'year': year,
         'month': month,
-        'calendar_notes': calendar_notes,
+        'calendar_tasks': calendar_tasks, # Pass the new task structure
         'total_days': total_days,
         'today_day': today.day if today.year == year and today.month == month else None,
     }

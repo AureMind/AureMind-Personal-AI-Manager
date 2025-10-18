@@ -11,12 +11,15 @@
   {% for day in 1|to:total_days %}
     <div class="col-1 border p-2 mb-2 {% if day == today_day %}bg-warning{% endif %}">
       <strong>{{ day }}</strong><br>
-      {% if day in calendar_notes %}
-        {% for note in calendar_notes.day %}
-          <div class="badge bg-primary mb-1">{{ note.title }}</div>
-        {% endfor %}
-      {% endif %}
-    </div>
+      
+      {% for task_day, tasks in calendar_tasks.items %}
+        {% if task_day == day %}
+          {% for task in tasks %}
+            <div class="badge bg-success mb-1">{{ task.title }} ({{ task.due_date|time:"H:i" }})</div>
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+      </div>
   {% endfor %}
 </div>
 
