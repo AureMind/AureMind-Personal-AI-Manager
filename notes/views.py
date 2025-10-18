@@ -111,11 +111,49 @@ def calendar_view(request, year=None, month=None):
 
 @login_required
 def task(request):
-    notes_with_due_dates = Note.objects.filter(user=request.user).exclude(due_date__isnull=True).order_by('due_date')
+    tasks = Task.objects.filter(user=request.user).order_by('due_date')
     context = {
-        'notes_with_due_dates': notes_with_due_dates,
+        'tasks': tasks,
     }
-    return render(request, 'notes/task.html', context)
+    return render(request, 'task/task.html', context)
+
+@login_required
+def task_create(request):
+    if request.method == 'POST':
+        form = TimeScheduleForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.user = request.user
+            task.save()
+            return redirect('notes:task')
+        else:
+            return render(request, 'task/task_form.html', {'form': form})
+    else:
+        form = TimeScheduleForm()
+    return render(request, 'task/task_form.html', {'form': form})
+
+@login_required
+def task_update(request, pk):
+    task = get_object_or_404(Task, pk=pk, user=request.user) 
+    if request.method == 'POST':
+        form = TimeScheduleForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            return redirect('notes:task') 
+        else:
+            return render(request, 'task/task_form.html', {'form': form, 'task': task})
+    else:
+        form = TimeScheduleForm(instance=task)
+    return render(request, 'task/task_form.html', {'form': form, 'task': task})
+
+@login_required
+def task_delete(request, pk):
+    task = get_object_or_404(Task, pk=pk, user=request.user) 
+    if request.method == 'POST':
+        task.delete()
+        return redirect('notes:task') 
+    return render(request, 'task/confirm_delete.html', {'task': task})
+
 
 @login_required
 def note(request):

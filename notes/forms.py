@@ -11,5 +11,5 @@ class TimeScheduleForm(forms.ModelForm):
         model = Task
         fields = ['title','due_date']
         widgets = {
-            'due_date': forms.DateInput(attrs={'type': 'date'}),
+            'due_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }

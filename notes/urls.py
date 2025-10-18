@@ -23,4 +23,9 @@ urlpatterns = [
     path('note/<int:pk>/', views.note_detail, name='detail'),
     path('note/<int:pk>/edit/', views.note_update, name='edit'),
     path('note/<int:pk>/delete/', views.note_delete, name='delete'),
+
+    # Task CRUD
+    path('task/create/', views.task_create, name='task_create'),
+    path('task/<int:pk>/edit/', views.task_update, name='task_edit'),
+    path('task/<int:pk>/delete/', views.task_delete, name='task_delete'),
 ]

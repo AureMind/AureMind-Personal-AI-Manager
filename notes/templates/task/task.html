@@ -1,0 +1,24 @@
+{% extends "notes/base.html" %}
+{% block title %}Tasks{% endblock %}
+
+{% block content %}
+<h1>Upcoming Tasks</h1>
+
+{% if tasks %}
+  <ul class="list-group">
+    {% for task_item in tasks %}
+      <li class="list-group-item">
+        <strong>Task:</strong> {{ task_item.title }}<br>
+        <strong>Due Date:</strong> {{ task_item.due_date|date:"M d, Y H:i" }}
+        
+        <div class="mt-2">
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'notes:task_edit' pk=task_item.pk %}">Edit</a>
+          <a class="btn btn-sm btn-danger" href="{% url 'notes:task_delete' pk=task_item.pk %}">Delete</a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No tasks with deadlines found!</p>
+{% endif %}
+{% endblock %}

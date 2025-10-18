@@ -13,9 +13,9 @@ class Note(models.Model):
         return self.title
 
 class Task(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
-    note = models.OneToOneField(Note, on_delete=models.CASCADE, primary_key=True)
-    due_date = models.DateField()
+    due_date = models.DateTimeField()
 
     def __str__(self):
-        return f"Schedule for {self.note.title}"
+        return f"Schedule for {self.title}"
