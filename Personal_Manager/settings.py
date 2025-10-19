@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -130,4 +131,4 @@ LOGOUT_REDIRECT_URL = 'notes:login'       # where to go after logout
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-GOOGLE_API_KEY = 'API_KEY_HERE'
+GOOGLE_API_KEY = api.api
