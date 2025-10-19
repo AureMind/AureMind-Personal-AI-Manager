@@ -23,16 +23,20 @@
         <li class="nav-item"><a class="nav-link" href="{% url 'notes:note' %}">Notes</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'notes:task' %}">Tasks</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'notes:calendar' %}">Calendar</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'notes:chat' %}">AI Chat</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'notes:about' %}">About</a></li>
       </ul>
     {% endif %}
 
       <div class="ms-auto d-flex align-items-center">
       {% if user.is_authenticated %}
-      <form method="get" action="{% url 'notes:dashboard' %}" class="d-flex me-3">
-        <input type="text" name="q" value="{{ q|default:'' }}" class="form-control form-control-sm" placeholder="Search notes...">
-        <button type="submit" class="btn btn-outline-secondary btn-sm ms-1">Search</button>
-      </form>
+        <!-- New Live Search Bar -->
+        <div class="search-container position-relative me-3">
+          <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search notes..." autocomplete="off">
+          <div id="search-results" class="dropdown-menu position-absolute" style="display: none; width: 300px;">
+              <!-- Search results will be injected here by JavaScript -->
+          </div>
+        </div>
       {% endif %}
 
       {% if user.is_authenticated %}
@@ -52,6 +56,62 @@
   {% block content %}{% endblock %}
 
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('search-input');
+  const searchResults = document.getElementById('search-results');
+  const searchUrl = "{% url 'notes:search_notes' %}";
+
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      const query = searchInput.value;
+
+      if (query.length < 3) {
+        searchResults.style.display = 'none';
+        return;
+      }
+
+      fetch(`${searchUrl}?q=${query}`)
+        .then(response => response.json())
+        .then(data => {
+          searchResults.innerHTML = ''; // Clear previous results
+
+          if (data.notes && data.notes.length > 0) {
+            data.notes.forEach(note => {
+              const link = document.createElement('a');
+              link.href = note.url;
+              link.className = 'dropdown-item';
+              link.textContent = note.title;
+              searchResults.appendChild(link);
+            });
+            searchResults.style.display = 'block';
+          } else {
+             const noResult = document.createElement('span');
+             noResult.className = 'dropdown-item text-muted';
+             noResult.textContent = 'No results found';
+             searchResults.appendChild(noResult);
+             searchResults.style.display = 'block';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching search results:', error);
+          searchResults.style.display = 'none';
+        });
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.search-container')) {
+        searchResults.style.display = 'none';
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
+
 </body>
 
 <footer class="bg-light text-center text-lg-start mt-5 py-3">

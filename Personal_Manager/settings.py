@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-=haim(vv-o54rd4$aeu&^^2-rutmqa8ya_^&$&=sa3hs!9oxcs
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['103.85.127.113','0.0.0.0','100.78.166.33','127.0.0.1']
+ALLOWED_HOSTS = ['0.0.0.0','100.78.166.33','127.0.0.1']
 
 
 # Application definition
@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'notes'
+    'notes',
 ]
 
 MIDDLEWARE = [
@@ -129,3 +129,5 @@ LOGOUT_REDIRECT_URL = 'notes:login'       # where to go after logout
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+GOOGLE_API_KEY = 'AIzaSyDNArMBAjF0lcvxgriO6WR4QYlykitMQz8'

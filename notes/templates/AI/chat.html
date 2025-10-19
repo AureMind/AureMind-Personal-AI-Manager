@@ -1,0 +1,288 @@
+{% extends "notes/base.html" %}
+{% load static %}
+
+{% block title %}AI Chat{% endblock %}
+
+{% block content %}
+<style>
+  #chat-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #chat-history {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 60vh;
+    background-color: #fcfcfc;
+  }
+  .chat-cell {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    position: relative; /* Needed for positioning the save button */
+  }
+  .input-cell {
+    background-color: #f0f4f8;
+    border: 1px solid #e0e7ee;
+    white-space: pre-wrap; /* Allow newlines in prompt display */
+  }
+  .input-cell::before {
+    content: "In [ ]:";
+    font-weight: bold;
+    color: #0d6efd;
+    margin-right: 10px;
+  }
+  .output-cell {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    white-space: pre-wrap; /* Preserves formatting like newlines */
+  }
+  .output-cell-content {
+    padding-right: 70px; /* Make space for the save button */
+  }
+  .output-cell::before {
+    content: "Out[ ]:";
+    font-weight: bold;
+    color: #dc3545;
+    margin-right: 10px;
+    display: block;
+    margin-bottom: 5px;
+  }
+  .save-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  #chat-form {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping for the dropdown */
+    padding: 15px;
+    border-top: 1px solid #ddd;
+    background-color: #f8f9fa;
+  }
+  
+  #prompt-container {
+    flex-grow: 1;
+    display: flex;
+    min-width: 200px; /* Ensure it doesn't get too small */
+    margin-bottom: 10px; /* Add space below if it wraps */
+  }
+
+  #chat-prompt {
+    flex-grow: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  #note-select {
+    max-width: 200px; /* Limit width of dropdown */
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+    background-color: #fff;
+    color: #6c757d;
+  }
+  
+  #controls-container {
+    display: flex;
+    align-items: center;
+    margin-left: auto; /* Push controls to the right */
+    padding-left: 10px; /* Add some spacing */
+  }
+
+  #spinner {
+    display: none;
+    margin-right: 10px;
+  }
+  
+  /* Responsive adjustment */
+  @media (min-width: 768px) {
+    #chat-form {
+        flex-wrap: nowrap; /* Prevent wrapping on larger screens */
+    }
+    #prompt-container {
+        margin-bottom: 0;
+    }
+    #controls-container {
+        padding-left: 10px;
+    }
+  }
+</style>
+
+<h2>AI Chat</h2>
+<p>Your conversation is temporary. Click "Save" on any response. You can (optionally) select a note to provide as context for your prompt.</p>
+
+<div id="chat-container">
+  <div id="chat-history">
+    <div class="chat-cell output-cell">
+        <div class="output-cell-content">Hello! How can I help you today? Select a note from the dropdown if you'd like to add context to your prompt. (Press Enter to send, Shift+Enter for a new line)</div>
+    </div>
+  </div>
+  
+  <form id="chat-form">
+    {% csrf_token %}
+    
+    <div id="prompt-container" class="input-group">
+      <textarea id="chat-prompt" class="form-control" rows="2" placeholder="Type your prompt here..."></textarea>
+      <select id="note-select" class="form-select">
+        <option value="">No note context</option>
+        {% for note in all_notes %}
+          <option value="{{ note.pk }}">{{ note.title|truncatewords:5 }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div id="controls-container">
+      <div id="spinner" class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <button type="submit" class="btn btn-primary">Send</button>
+    </div>
+  </form>
+</div>
+
+<script>
+// --- *** NEW: Handle Enter/Shift+Enter for sending *** ---
+document.getElementById('chat-prompt').addEventListener('keydown', function(e) {
+    // Check if Enter is pressed without Shift
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); // Prevent default (new line)
+        // Find the form's submit button and click it
+        document.getElementById('chat-form').querySelector('button[type="submit"]').click();
+    }
+    // If Shift+Enter is pressed, do nothing (allow default new line)
+});
+
+// --- Handle form submission ---
+document.getElementById('chat-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const promptInput = document.getElementById('chat-prompt');
+    const noteSelect = document.getElementById('note-select'); // Get the dropdown
+    const chatHistory = document.getElementById('chat-history');
+    const spinner = document.getElementById('spinner');
+    const submitButton = this.querySelector('button[type="submit"]');
+    
+    const promptText = promptInput.value.trim();
+    const selectedNoteId = noteSelect.value; // Get the selected note ID
+    const selectedNoteText = noteSelect.options[noteSelect.selectedIndex].text;
+
+    if (!promptText) return;
+
+    // --- Show user's prompt ---
+    const inputCell = document.createElement('div');
+    inputCell.className = 'chat-cell input-cell';
+    let promptDisplay = promptText;
+    if (selectedNoteId) {
+        promptDisplay = `[Context: ${selectedNoteText}] \n${promptText}`;
+    }
+    inputCell.textContent = promptDisplay;
+    chatHistory.appendChild(inputCell);
+    
+    // --- Disable form and show spinner ---
+    promptInput.value = '';
+    // We don't reset the note select, user might want to ask follow-ups
+    promptInput.disabled = true;
+    noteSelect.disabled = true; // Disable select during request
+    submitButton.disabled = true;
+    spinner.style.display = 'block';
+
+    try {
+        const response = await fetch("{% url 'notes:chat' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ 
+                prompt: promptText,
+                note_id: selectedNoteId // Send the note_id
+            })
+        });
+        const data = await response.json();
+
+        // --- Create and display AI's response cell ---
+        const outputCell = document.createElement('div');
+        outputCell.className = 'chat-cell output-cell';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'output-cell-content';
+        
+        let aiResponseText = '';
+        if (data.response) {
+            aiResponseText = data.response;
+        } else if (data.error) {
+            aiResponseText = 'Error: ' + data.error;
+            contentDiv.style.color = 'red';
+        }
+        contentDiv.textContent = aiResponseText;
+        outputCell.appendChild(contentDiv);
+
+        // --- Create and add the Save button (if no error) ---
+        if (data.response) {
+            const saveButton = document.createElement('button');
+            saveButton.textContent = 'Save';
+            saveButton.className = 'btn btn-sm btn-outline-secondary save-btn';
+            
+            saveButton.addEventListener('click', async function() {
+                this.textContent = 'Saving...';
+                this.disabled = true;
+
+                try {
+                    const saveResponse = await fetch("{% url 'notes:save_chat' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            prompt: promptDisplay, // Save the prompt *with* context info
+                            ai_response: aiResponseText
+                        })
+                    });
+                    const saveData = await saveResponse.json();
+                    
+                    if (saveData.status === 'success') {
+                        this.textContent = 'Saved!';
+                        this.classList.remove('btn-outline-secondary');
+                        this.classList.add('btn-success');
+                    } else {
+                        this.textContent = 'Error!';
+                        this.classList.add('btn-danger');
+                    }
+                } catch (err) {
+                    this.textContent = 'Failed!';
+                    this.disabled = false;
+                }
+            });
+            outputCell.appendChild(saveButton);
+        }
+
+        chatHistory.appendChild(outputCell);
+
+    } catch (error) {
+        // --- Show network error ---
+        const outputCell = document.createElement('div');
+        outputCell.className = 'chat-cell output-cell';
+        outputCell.textContent = 'Error: Could not connect to the server.';
+        outputCell.style.color = 'red';
+        chatHistory.appendChild(outputCell);
+    } finally {
+        // --- Re-enable form and hide spinner ---
+        promptInput.disabled = false;
+        noteSelect.disabled = false; // Re-enable select
+        submitButton.disabled = false;
+        spinner.style.display = 'none';
+        chatHistory.scrollTop = chatHistory.scrollHeight; // Auto-scroll to bottom
+        promptInput.focus();
+    }
+});
+</script>
+{% endblock %}
