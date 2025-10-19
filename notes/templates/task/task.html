@@ -9,6 +9,7 @@
     {% for task_item in tasks %}
       <li class="list-group-item">
         <strong>Task:</strong> {{ task_item.title }}<br>
+        <div class="small text-muted">{{ task_item.created_at|date:"M d, Y H:i" }}</div>
         <strong>Due Date:</strong> {{ task_item.due_date|date:"M d, Y H:i" }}
         
         <div class="mt-2">

@@ -67,7 +67,7 @@ def note_create(request):
             note = form.save(commit=False)
             note.user = request.user
             note.save()
-            return redirect('notes:dashboard')
+            return redirect('notes:note')
         else:
             return render(request, 'notes/note_form.html', {'form': form})
     else:
@@ -94,7 +94,7 @@ def note_delete(request, pk):
     note = get_object_or_404(Note, pk=pk)
     if request.method == 'POST':
         note.delete()
-        return redirect('notes:dashboard')
+        return redirect('notes:note')
     return render(request, 'notes/confirm_delete.html', {'note': note})
 
 def note_detail(request, pk):
