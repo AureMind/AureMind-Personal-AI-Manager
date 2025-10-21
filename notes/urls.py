@@ -5,7 +5,9 @@ from . import views
 app_name = 'notes'
 
 urlpatterns = [
-    path('', views.home, name='dashboard'),
+    path('', auth_views.LoginView.as_view(template_name='notes/login.html'), name='login'),
+
+    path('dashboard/', views.home, name='dashboard'),
     
     path('notes/', views.note, name='note'),
     path('files/', views.files, name='files'),
@@ -22,6 +24,9 @@ urlpatterns = [
     path('note/<int:pk>/', views.note_detail, name='detail'),
     path('note/<int:pk>/edit/', views.note_update, name='edit'),
     path('note/<int:pk>/delete/', views.note_delete, name='delete'),
+    
+    # --- NEW URL FOR SERVING FILES ---
+    path('note/<int:pk>/attachment/', views.serve_attachment, name='serve_attachment'),
 
     # Task CRUD
     path('calendar/', views.calendar_view, name='calendar'),

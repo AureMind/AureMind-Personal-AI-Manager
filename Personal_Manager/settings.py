@@ -23,6 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-=haim(vv-o54rd4$aeu&^^2-rutmqa8ya_^&$&=sa3hs!9oxcs'
+FERNET_KEY = b'8FwtQCZ1Qd6ozeREDK3Co_sUhr7J2PDbzrgFUvWFvdA='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -125,7 +126,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'notes:login'                 # where @login_required sends you
-LOGIN_REDIRECT_URL = 'notes:home'   # where to go after login
+LOGIN_REDIRECT_URL = 'notes:dashboard'   # where to go after login
 LOGOUT_REDIRECT_URL = 'notes:login'       # where to go after logout
 
 MEDIA_URL = '/media/'

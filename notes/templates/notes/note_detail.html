@@ -2,16 +2,21 @@
 {% block title %}{{ note.title }}{% endblock %}
 {% block content %}
 <h2>{{ note.title }}</h2>
-<p>{{ note.content }}</p>
+<p class="small text-muted">{{ note.created_at|date:"M d, Y H:i" }}</p>
+
+<p>{{ note.content|linebreaks }}</p>
 
 {% if note.due_date %}
 <p><strong>Due:</strong> {{ note.due_date|date:"M d, Y H:i" }}</p>
 {% endif %}
 
-{% if note.attachment %}
-<p><strong>Attachment:</strong> <a href="{{ note.attachment.url }}" target="_blank">{{ note.attachment.name }}</a></p>
+{% if note.attachment_name %}
+<p>
+  <strong>Attachment:</strong> 
+  <a href="{% url 'notes:serve_attachment' pk=note.pk %}" target="_blank">{{ note.attachment_name }}</a>
+</p>
 {% endif %}
 
 <a href="{% url 'notes:edit' pk=note.pk %}" class="btn btn-secondary">Edit</a>
 <a href="{% url 'notes:delete' pk=note.pk %}" class="btn btn-danger">Delete</a>
-{% endblock %}
+{% endblock %} 

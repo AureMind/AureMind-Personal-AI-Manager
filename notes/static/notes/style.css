@@ -7,12 +7,12 @@
 }
 
 .nav-items {
-  margin-left: 225px; /* push nav items right, adjust to your logo width */
+  margin-left:250px;
 }
 
 
 .navbar-logo {
-  height: 250px;
+  height:60px;
   position: absolute;
   top: 50%;
   transform: translateY(-50%) translateX(40px);

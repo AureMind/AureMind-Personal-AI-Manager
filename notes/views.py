@@ -9,10 +9,11 @@ from datetime import datetime , date, time
 from calendar import monthrange
 from django.db.models import Q
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
 from django.urls import reverse
 import google.generativeai as genai
+import mimetypes # To guess the file type
 
 
 @login_required
@@ -28,7 +29,7 @@ def search_notes(request):
         note_results = Note.objects.filter(
             user=request.user
         ).filter(
-            Q(title__icontains=query) | Q(content__icontains=query)
+            Q(title__icontains=query) | Q(encrypted_content__icontains=query) # Search encrypted field
         ).order_by('-created_at')[:10]
         
         # Format the results for the JSON response
@@ -47,7 +48,10 @@ def home(request):
     q = request.GET.get('q', '')
     notes = Note.objects.filter(user=request.user)
     if q:
-        notes = notes.filter(Q(title__icontains=q) | Q(content__icontains=q))
+        # Note: Searching encrypted content directly like this is inefficient and
+        # may not work depending on the database. 
+        # A proper search solution would require a different approach.
+        notes = notes.filter(Q(title__icontains=q)) 
     paginator = Paginator(notes.order_by('-created_at'), 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -66,7 +70,7 @@ def note_create(request):
         if form.is_valid():
             note = form.save(commit=False)
             note.user = request.user
-            note.save()
+            note.save() # The form's save() method now handles encryption
             return redirect('notes:note')
         else:
             return render(request, 'notes/note_form.html', {'form': form})
@@ -77,7 +81,7 @@ def note_create(request):
 
 @login_required
 def note_update(request, pk):
-    note = get_object_or_404(Note, pk=pk)
+    note = get_object_or_404(Note, pk=pk, user=request.user) # Ensure user owns note
     if request.method == 'POST':
         form = NoteForm(request.POST, request.FILES, instance=note)
         if form.is_valid():
@@ -91,15 +95,16 @@ def note_update(request, pk):
 
 @login_required
 def note_delete(request, pk):
-    note = get_object_or_404(Note, pk=pk)
+    note = get_object_or_404(Note, pk=pk, user=request.user) # Ensure user owns note
     if request.method == 'POST':
         note.delete()
         return redirect('notes:note')
     return render(request, 'notes/confirm_delete.html', {'note': note})
 
+@login_required # Added login_required
 def note_detail(request, pk):
-    note = get_object_or_404(Note, pk=pk)
-    return render(request, 'notes/detail.html', {'note': note})
+    note = get_object_or_404(Note, pk=pk, user=request.user) # Ensure user owns note
+    return render(request, 'notes/note_detail.html', {'note': note})
 
 def register(request):
     if request.method == 'POST':
@@ -116,7 +121,7 @@ def register(request):
 @login_required
 def dashboard(request):
     total_notes = Note.objects.filter(user=request.user).count()
-    context = {'total_notes': total_notes}
+    context = {'total_notes': total_notes, 'year': datetime.now().year} # Added year
     return render(request, 'notes/dashboard.html', context)
 
 
@@ -126,7 +131,8 @@ def note(request):
     q = request.GET.get('q', '')
     notes = Note.objects.filter(user=request.user)
     if q:
-        notes = notes.filter(Q(title__icontains=q) | Q(content__icontains=q))
+        # As mentioned in home(), direct search on encrypted data is not ideal
+        notes = notes.filter(Q(title__icontains=q))
     paginator = Paginator(notes.order_by('-created_at'), 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -139,11 +145,34 @@ def note(request):
 
 @login_required
 def files(request):
-    notes_with_files = Note.objects.filter(user=request.user).exclude(attachment='')
+    # Updated to check for the new attachment fields
+    notes_with_files = Note.objects.filter(user=request.user).exclude(attachment_name__isnull=True).exclude(attachment_name__exact='')
     context = {
         'notes_with_files': notes_with_files,
     }
     return render(request, 'notes/files.html', context)
+
+
+# --- NEW VIEW TO SERVE DECRYPTED FILES ---
+@login_required
+def serve_attachment(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    
+    decrypted_bytes, file_name = note.get_attachment()
+    
+    if decrypted_bytes is None:
+        raise Http404("No attachment found or decryption failed.")
+
+    # Guess the content-type (e.g., 'image/jpeg') from the file name
+    content_type, _ = mimetypes.guess_type(file_name)
+    if content_type is None:
+        content_type = 'application/octet-stream' # Default fallback
+
+    # Create an HTTP response with the decrypted file data
+    response = HttpResponse(decrypted_bytes, content_type=content_type)
+    # Add a header to suggest displaying inline or downloading with its original name
+    response['Content-Disposition'] = f'inline; filename="{file_name}"'
+    return response
 
 
 @login_required
@@ -170,7 +199,7 @@ def chat_view(request):
                         f"Please use the following note as context:\n"
                         f"--- NOTE START ---\n"
                         f"Title: {note.title}\n"
-                        f"Content: {note.content}\n"
+                        f"Content: {note.content}\n" # Uses the .content property getter
                         f"--- NOTE END ---\n\n"
                         f"Now, please respond to this prompt: {prompt}"
                     )
@@ -180,7 +209,7 @@ def chat_view(request):
 
             # 3. Configure and call the Gemini API
             genai.configure(api_key=settings.GOOGLE_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-1.5-flash') # Using 1.5-flash
             response = model.generate_content(final_prompt) # Use the final_prompt
             ai_response = response.text
 
@@ -218,11 +247,13 @@ def save_chat_note(request):
             # Prompt already contains context info if it was used
             content = f"**My Prompt:**\n{prompt}\n\n**AI Response:**\n{ai_response}"
 
-            Note.objects.create(
+            # Create the note
+            new_note = Note(
                 user=request.user,
-                title=f"Chat: {title}",
-                content=content
+                title=f"Chat: {title}"
             )
+            new_note.content = content # Use the .content setter to encrypt
+            new_note.save()
 
             return JsonResponse({'status': 'success', 'message': 'Note saved!'})
 
@@ -232,7 +263,7 @@ def save_chat_note(request):
     return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
 def about(request):
-    return render(request, 'notes/about.html')
+    return render(request, 'notes/about.html', {'year': datetime.now().year}) # Added year
     
 @login_required
 def calendar_view(request, year=None, month=None):

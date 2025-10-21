@@ -1,6 +1,6 @@
 {% extends 'notes/base.html' %}
 {% block title %}All Notes{% endblock %}
-{% block content %}
+{% load file_filters %} {% block content %}
 <h1>Notes</h1>
 
 <ul class="list-group">
@@ -15,20 +15,20 @@
       <div class="small text-muted">{{ note.created_at|date:"M d, Y H:i" }}</div>
       <div>{{ note.content|truncatewords:25 }}</div>
 
-      {% if note.attachment %}
-        {% with note.attachment.url|lower as file_url %}
+      {% if note.attachment_name %}
+        {% with note.attachment_name|lower as file_name %}
           <div class="mt-2">
-            {% if ".jpg" in file_url or ".jpeg" in file_url or ".png" in file_url or ".gif" in file_url %}
-              <img src="{{ note.attachment.url }}" class="img-fluid" style="max-width:300px;">
-            {% elif ".pdf" in file_url %}
-              <a href="{{ note.attachment.url }}" target="_blank">View PDF</a>
-            {% elif ".mp4" in file_url or ".webm" in file_url %}
+            {% if file_name|endswith:".jpg" or file_name|endswith:".jpeg" or file_name|endswith:".png" or file_name|endswith:".gif" %}
+              <img src="{% url 'notes:serve_attachment' pk=note.pk %}" class="img-fluid" style="max-width:300px;">
+            {% elif file_name|endswith:".pdf" %}
+              <a href="{% url 'notes:serve_attachment' pk=note.pk %}" target="_blank">View PDF ({{ note.attachment_name }})</a>
+            {% elif file_name|endswith:".mp4" or file_name|endswith:".webm" %}
               <video controls style="max-width:300px;">
-                <source src="{{ note.attachment.url }}">
+                <source src="{% url 'notes:serve_attachment' pk=note.pk %}" type="video/mp4">
                 Your browser does not support the video tag.
               </video>
             {% else %}
-              <a href="{{ note.attachment.url }}" target="_blank">Download File</a>
+              <a href="{% url 'notes:serve_attachment' pk=note.pk %}" target="_blank">Download File ({{ note.attachment_name }})</a>
             {% endif %}
           </div>
         {% endwith %}
