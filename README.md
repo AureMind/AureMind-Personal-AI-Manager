@@ -1,4 +1,4 @@
-# Ai Personal Manager/college_project
+# AureMind/college_project
 
 This project was created by Group 10 of the Software Engineering class (led by Ms. Neha Kumari), 3rd-year Computer Science students at Delhi University:
 - Dhruv Kahsyap
