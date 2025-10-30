@@ -1,2 +1,2 @@
 GITHUB REPOSITORY LINK:
-https://github.com/NathPrashant/college_project
+https://github.com/AureMind/BackEnd
