@@ -5,9 +5,10 @@ from .forms import NoteForm , TimeScheduleForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
-from datetime import datetime , date, time
+from datetime import datetime , date, timedelta
+from django.utils import timezone
 from calendar import monthrange
-from django.db.models import Q
+from django.db.models import Q  
 import json
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
@@ -71,6 +72,7 @@ def note_create(request):
             note = form.save(commit=False)
             note.user = request.user
             note.save() # The form's save() method now handles encryption
+            messages.success(request, f"Note '{note.title}' created successfully!")
             return redirect('notes:note')
         else:
             return render(request, 'notes/note_form.html', {'form': form})
@@ -86,6 +88,7 @@ def note_update(request, pk):
         form = NoteForm(request.POST, request.FILES, instance=note)
         if form.is_valid():
             form.save()
+            messages.success(request, f"Note '{note.title}' updated successfully!")
             return redirect('notes:detail', pk=note.pk)
         else:
             return render(request, 'notes/note_form.html', {'form': form, 'note': note})
@@ -98,6 +101,7 @@ def note_delete(request, pk):
     note = get_object_or_404(Note, pk=pk, user=request.user) # Ensure user owns note
     if request.method == 'POST':
         note.delete()
+        messages.success(request, f"Note '{note.title}' updated successfully!")
         return redirect('notes:note')
     return render(request, 'notes/confirm_delete.html', {'note': note})
 
@@ -209,7 +213,7 @@ def chat_view(request):
 
             # 3. Configure and call the Gemini API
             genai.configure(api_key=settings.GOOGLE_API_KEY)
-            model = genai.GenerativeModel('gemini-1.5-flash') # Using 1.5-flash
+            model = genai.GenerativeModel('gemini-2.5-pro') # Using 1.5-flash
             response = model.generate_content(final_prompt) # Use the final_prompt
             ai_response = response.text
 
@@ -315,6 +319,7 @@ def task_create(request):
             task = form.save(commit=False)
             task.user = request.user
             task.save()
+            messages.success(request, f"Task '{task.title}' created successfully!")
             return redirect('notes:task')
         else:
             return render(request, 'task/task_form.html', {'form': form})
@@ -329,6 +334,7 @@ def task_update(request, pk):
         form = TimeScheduleForm(request.POST, instance=task)
         if form.is_valid():
             form.save()
+            messages.success(request, f"Task '{task.title}' updated successfully!")
             return redirect('notes:task') 
         else:
             return render(request, 'task/task_form.html', {'form': form, 'task': task})
@@ -341,5 +347,51 @@ def task_delete(request, pk):
     task = get_object_or_404(Task, pk=pk, user=request.user) 
     if request.method == 'POST':
         task.delete()
+        messages.success(request, f"Task '{task.title}' deleted successfully!")
         return redirect('notes:task') 
     return render(request, 'task/confirm_delete.html', {'task': task})
+
+@login_required
+def check_task_notifications(request):
+    """
+    Checks for tasks due soon and returns them as JSON.
+    This view is meant to be polled by JavaScript.
+    """
+    now = timezone.now()
+    # Find tasks due between now and 30 minutes from now
+    upcoming_tasks = Task.objects.filter(
+        user=request.user,
+        due_date__lte=now + timedelta(minutes=30), # Due in the next 30 mins
+        due_date__gt=now                          # But not already past
+    )
+
+    # We'll use the session to only notify once per task
+    notified_tasks = request.session.get('notified_tasks', [])
+    
+    tasks_to_notify = []
+    
+    # --- ADD THIS LINE ---
+    # Get the current active timezone (which you set in settings.py)
+    local_tz = timezone.get_current_timezone()
+
+    for task in upcoming_tasks:
+        if task.pk not in notified_tasks:
+            
+            # --- ADD THIS LINE ---
+            # Convert the task's UTC time to your local timezone
+            local_due_date = task.due_date.astimezone(local_tz)
+
+            tasks_to_notify.append({
+                'id': task.pk,
+                'title': task.title,
+                
+                # --- MODIFY THIS LINE ---
+                # Use the new local_due_date variable for formatting
+                'due_date_str': local_due_date.strftime("%#I:%M %p") 
+            })
+            # Add to session list so we don't notify again
+            notified_tasks.append(task.pk)
+
+    request.session['notified_tasks'] = notified_tasks
+
+    return JsonResponse({'tasks': tasks_to_notify})

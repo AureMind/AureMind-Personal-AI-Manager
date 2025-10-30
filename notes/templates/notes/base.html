@@ -30,12 +30,10 @@
 
       <div class="ms-auto d-flex align-items-center">
       {% if user.is_authenticated %}
-        <!-- New Live Search Bar -->
         <div class="search-container position-relative me-3">
           <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search notes..." autocomplete="off">
           <div id="search-results" class="dropdown-menu position-absolute" style="display: none; width: 300px;">
-              <!-- Search results will be injected here by JavaScript -->
-          </div>
+              </div>
         </div>
       {% endif %}
 
@@ -53,6 +51,18 @@
   </div>
 </nav>
 <div class="container mt-4">
+
+  <div id="notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 1050; min-width: 250px;">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags | default:'info' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+    </div>
+
   {% block content %}{% endblock %}
 
 </div>
@@ -60,6 +70,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // --- 1. LIVE SEARCH SCRIPT ---
   const searchInput = document.getElementById('search-input');
   const searchResults = document.getElementById('search-results');
   const searchUrl = "{% url 'notes:search_notes' %}";
@@ -101,16 +112,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Hide dropdown when clicking outside
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.search-container')) {
         searchResults.style.display = 'none';
       }
     });
   }
+
+  // --- 2. NEW: DEADLINE NOTIFICATION POLLING SCRIPT ---
+  const notificationContainer = document.getElementById('notification-container');
+  const notificationUrl = "{% url 'notes:task_notifications' %}";
+
+  function checkTaskNotifications() {
+    fetch(notificationUrl)
+      .then(response => response.json())
+      .then(data => {
+        if (data.tasks && data.tasks.length > 0) {
+          data.tasks.forEach(task => {
+            // Create the alert HTML
+            const alertHTML = `
+              <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong>Task Due Soon!</strong><br>
+                "${task.title}" is due at ${task.due_date_str}.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            `;
+            // Add the alert to the container
+            notificationContainer.insertAdjacentHTML('beforeend', alertHTML);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching task notifications:', error);
+      });
+  }
+
+  // Check for notifications every 30 seconds (30000 milliseconds)
+  // You can change this interval
+ if (window.isAuthenticated) {
+    setInterval(checkTaskNotifications, 30000);
+    // Also check once on page load
+    checkTaskNotifications();
+  }
+
 });
 </script>
 {% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 

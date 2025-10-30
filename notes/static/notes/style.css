@@ -1,23 +1,27 @@
 .navbar {
   height: 70px;
   padding: 0 1rem;
-  position: relative;
+  /* position: relative; -- No longer needed */
   overflow: visible;
   background-color: transparent !important;
 }
 
 .nav-items {
-  margin-left:250px;
+  /* margin-left: 250px; -- REMOVED this fragile margin */
 }
 
 
 .navbar-logo {
-  height:60px;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%) translateX(40px);
-  left: 0;
-  z-index: 10;
+  height: 60px;
+  /* REMOVED absolute positioning to fix overlap */
+  /* position: absolute; */
+  /* top: 50%; */
+  /* transform: translateY(-50%) translateX(40px); */
+  /* left: 0; */
+  /* z-index: 10; */
+  
+  /* This helps center it vertically in the navbar */
+  vertical-align: middle; 
 }
 
 footer {

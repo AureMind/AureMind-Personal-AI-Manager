@@ -5,15 +5,17 @@ from . import views
 app_name = 'notes'
 
 urlpatterns = [
-    path('', auth_views.LoginView.as_view(template_name='notes/login.html'), name='login'),
+    # The root path (homepage) now points to the dashboard view
+    path('', views.home, name='dashboard'),
 
-    path('dashboard/', views.home, name='dashboard'),
-    
+    # The original /dashboard/ path is removed as it's redundant
+
     path('notes/', views.note, name='note'),
     path('files/', views.files, name='files'),
     path('search/', views.search_notes, name='search_notes'),
 
     # Auth routes
+    # This /login/ path is kept for LOGIN_URL
     path('login/', auth_views.LoginView.as_view(template_name='notes/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/', views.register, name='register'),
@@ -34,6 +36,7 @@ urlpatterns = [
     path('task/create/', views.task_create, name='task_create'),
     path('task/<int:pk>/edit/', views.task_update, name='task_edit'),
     path('task/<int:pk>/delete/', views.task_delete, name='task_delete'),
+    path('task-notifications/', views.check_task_notifications, name='task_notifications'),
 
     #AI Chat Integration
     path('chat/', views.chat_view, name='chat'),
