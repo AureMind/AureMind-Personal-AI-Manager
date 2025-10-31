@@ -10,11 +10,13 @@
     <div class="mb-3">
       <label class="form-label">Title</label>
       {{ form.title }}
+      {{ form.title.errors }}
     </div>
 
     <div class="mb-3">
       <label class="form-label">Due Date & Time</label>
       {{ form.due_date }}
+      {{ form.due_date.errors }}
     </div>
 
     <button type="submit" class="btn btn-success">Save Task</button>

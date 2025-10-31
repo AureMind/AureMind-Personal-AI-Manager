@@ -1,43 +1,64 @@
-.navbar {
-  height: 70px;
-  padding: 0 1rem;
-  /* position: relative; -- No longer needed */
-  overflow: visible;
-  background-color: transparent !important;
+/* General Resets and Body */
+:root {
+  --app-bg: #f8f9fa;
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: #dee2e6;
+  --text-color: #212529;
+  --text-muted: #6c757d;
+  --primary-color: #0d6efd;
 }
 
-.nav-items {
-  /* margin-left: 250px; -- REMOVED this fragile margin */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--app-bg);
+  margin: 0;
+  padding: 0;
+  color: var(--text-color);
+  font-size: 15px;
 }
 
+/* 1. The Main App Layout (3-Column Grid) */
+.app-container {
+  display: grid;
+  grid-template-columns: 240px 1fr 280px; /* Sidebar | Main | Right Gutter */
+  grid-template-rows: auto 1fr auto; /* Header | Content | Footer */
+  grid-template-areas:
+    "header header header"
+    "sidebar main-content right-sidebar"
+    "footer footer footer";
+  min-height: 100vh;
+}
 
-.navbar-logo {
+/* 2. Header (was the old navbar) */
+.app-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1.5rem;
+  background-color: var(--sidebar-bg);
+  border-bottom: 1px solid var(--border-color);
   height: 60px;
-  /* REMOVED absolute positioning to fix overlap */
-  /* position: absolute; */
-  /* top: 50%; */
-  /* transform: translateY(-50%) translateX(40px); */
-  /* left: 0; */
-  /* z-index: 10; */
-  
-  /* This helps center it vertically in the navbar */
-  vertical-align: middle; 
+}
+.app-header .navbar-logo {
+  height: 40px; /* Smaller logo for the header */
 }
 
-footer {
-  background-color: #f8f9fa;
-  padding: 1rem 0;
-  position: relative;
-  bottom: 0;
-  width: 100%;
+/* Mobile-only hamburger button */
+.sidebar-toggle {
+  display: none;
+  font-size: 1.75rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  padding: 0 0.5rem;
 }
 
-footer a {
-  color: #0d6efd;
-  text-decoration: none;
-  margin: 0 0.5rem;
-}
-
-footer a:hover {
-  text-decoration: underline;
+/* 3. Left Sidebar */
+.sidebar {
+  grid-area: sidebar;
+  background-color: var(--sidebar-bg);
+  padding: 1.5rem;
+  border-right: 1px solid var(--border-color);
 }

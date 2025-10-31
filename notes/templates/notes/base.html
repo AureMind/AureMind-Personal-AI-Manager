@@ -3,173 +3,231 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{% block title %}Personal Manager Notes{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AureMind{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  
   <link rel="stylesheet" href="{% static 'notes/style.css' %}">
   <link rel="shortcut icon" href="{% static 'notes/Auremind Icon.png' %}" type="image/x-icon">
   <link rel="icon" href="{% static 'notes/Auremind Icon.png' %}" type="image/x-icon">
 </head>
 
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container">
-    <a class="navbar-brand" href="{% url 'notes:dashboard' %}">
-      <img src="{% static 'notes/Auremind Logo.png' %}" alt="Auremind Logo" class="navbar-logo">
-    </a>
-    
-    {% if user.is_authenticated %}
-      <ul class="nav nav-items">
-        <li class="nav-item"><a class="nav-link" href="{% url 'notes:dashboard' %}">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'notes:note' %}">Notes</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'notes:task' %}">Tasks</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'notes:calendar' %}">Calendar</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'notes:chat' %}">AI Chat</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'notes:about' %}">About</a></li>
-      </ul>
-    {% endif %}
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-      <div class="ms-auto d-flex align-items-center">
+  <div class="app-container">
+
+    <header class="app-header">
+      <div class="d-flex align-items-center">
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <i class="bi bi-list"></i>
+        </button>
+        <a class="navbar-brand ms-2" href="{% url 'notes:dashboard' %}">
+          <img src="{% static 'notes/Auremind Logo.png' %}" alt="Auremind Logo" class="navbar-logo">
+        </a>
+      </div>
+
+      <div class="d-flex align-items-center">
+        {% if user.is_authenticated %}
+          <div class="search-container position-relative me-3">
+            <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search notes..." autocomplete="off">
+            <div id="search-results" class="dropdown-menu position-absolute" style="display: none; width: 300px;"></div>
+          </div>
+          <form method="post" action="{% url 'notes:logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'notes:register' %}" class="btn btn-outline-success btn-sm me-2">Register</a>
+          <a href="{% url 'notes:login' %}" class="btn btn-outline-primary btn-sm">Login</a>
+        {% endif %}
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
       {% if user.is_authenticated %}
-        <div class="search-container position-relative me-3">
-          <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search notes..." autocomplete="off">
-          <div id="search-results" class="dropdown-menu position-absolute" style="display: none; width: 300px;">
-              </div>
+        <div class="user-profile">
+          <div class="avatar">{{ user.username|first|upper }}</div>
+          <span class="username">Hi, {{ user.username }}!</span>
+        </div>
+
+        <ul class="nav-links">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'notes:dashboard' %}"><i class="bi bi-house-door"></i>Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'notes:note' %}"><i class="bi bi-stickies"></i>Notes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'notes:task' %}"><i class="bi bi-check2-square"></i>Tasks</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'notes:calendar' %}"><i class="bi bi-calendar-week"></i>Calendar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'notes:chat' %}"><i class="bi bi-robot"></i>AI Chat</a>
+          </li>
+        </ul>
+
+        <div class="sidebar-footer">
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'notes:about' %}"><i class="bi bi-info-circle"></i>About</a>
+            </li>
+          </ul>
         </div>
       {% endif %}
+    </aside>
 
-      {% if user.is_authenticated %}
-      <span class="me-2">Hi, {{ user.username }}!</span>
-      <form method="post" action="{% url 'notes:logout' %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
-      </form>
-      {% else %}
-      <a href="{% url 'notes:register' %}" class="btn btn-outline-success btn-sm me-2">Register</a>
-      <a href="{% url 'notes:login' %}" class="btn btn-outline-primary btn-sm">Login</a>
-      {% endif %}
-    </div>
-  </div>
-</nav>
-<div class="container mt-4">
+    <main class="main-content">
+      
+      <div id="notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 1050; min-width: 250px;">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags | default:'info' }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
 
-  <div id="notification-container" style="position: fixed; top: 80px; right: 20px; z-index: 1050; min-width: 250px;">
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags | default:'info' }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      {% endfor %}
-    {% endif %}
-    </div>
+      {% block content %}{% endblock %}
+    </main>
 
-  {% block content %}{% endblock %}
+    <aside class="right-sidebar">
+      </aside>
 
-</div>
+    <footer class="app-footer">
+      <p class="mb-0">&copy; {% now "Y" %} Auremind. All rights reserved.</p>
+    </footer>
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // --- 1. LIVE SEARCH SCRIPT ---
-  const searchInput = document.getElementById('search-input');
-  const searchResults = document.getElementById('search-results');
-  const searchUrl = "{% url 'notes:search_notes' %}";
+  </div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-  if (searchInput) {
-    searchInput.addEventListener('keyup', function() {
-      const query = searchInput.value;
+  <script>
+    // Pass auth status to JS
+    window.isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+  </script>
 
-      if (query.length < 3) {
-        searchResults.style.display = 'none';
-        return;
-      }
+  {% block extra_js %}
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
 
-      fetch(`${searchUrl}?q=${query}`)
+    // --- 1. NEW: MOBILE SIDEBAR TOGGLE ---
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    if (sidebarToggle && sidebar && sidebarOverlay) {
+      sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('show');
+        sidebarOverlay.classList.toggle('show');
+      });
+
+      sidebarOverlay.addEventListener('click', function() {
+        sidebar.classList.remove('show');
+        sidebarOverlay.classList.remove('show');
+      });
+    }
+
+    // --- 2. LIVE SEARCH SCRIPT ---
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchUrl = "{% url 'notes:search_notes' %}";
+
+    if (searchInput && searchResults) {
+      searchInput.addEventListener('keyup', function() {
+        const query = searchInput.value;
+
+        if (query.length < 3) {
+          searchResults.style.display = 'none';
+          return;
+        }
+
+        fetch(`${searchUrl}?q=${query}`)
+          .then(response => response.json())
+          .then(data => {
+            searchResults.innerHTML = ''; // Clear previous results
+
+            if (data.notes && data.notes.length > 0) {
+              data.notes.forEach(note => {
+                const link = document.createElement('a');
+                link.href = note.url;
+                link.className = 'dropdown-item';
+                link.textContent = note.title;
+                searchResults.appendChild(link);
+              });
+              searchResults.style.display = 'block';
+            } else {
+              const noResult = document.createElement('span');
+              noResult.className = 'dropdown-item text-muted';
+              noResult.textContent = 'No results found';
+              searchResults.appendChild(noResult);
+              searchResults.style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching search results:', error);
+            searchResults.style.display = 'none';
+          });
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-container')) {
+          searchResults.style.display = 'none';
+        }
+      });
+    }
+
+    // --- 3. DEADLINE NOTIFICATION POLLING SCRIPT ---
+    const notificationContainer = document.getElementById('notification-container');
+    const notificationUrl = "{% url 'notes:task_notifications' %}";
+
+    function checkTaskNotifications() {
+      if (!notificationContainer) return; 
+
+      fetch(notificationUrl)
         .then(response => response.json())
         .then(data => {
-          searchResults.innerHTML = ''; // Clear previous results
-
-          if (data.notes && data.notes.length > 0) {
-            data.notes.forEach(note => {
-              const link = document.createElement('a');
-              link.href = note.url;
-              link.className = 'dropdown-item';
-              link.textContent = note.title;
-              searchResults.appendChild(link);
+          if (data.tasks && data.tasks.length > 0) {
+            data.tasks.forEach(task => {
+              const alertHTML = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                  <strong>Task Due Soon!</strong><br>
+                  "${task.title}" is due at ${task.due_date_str}.
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              `;
+              notificationContainer.insertAdjacentHTML('beforeend', alertHTML);
             });
-            searchResults.style.display = 'block';
-          } else {
-             const noResult = document.createElement('span');
-             noResult.className = 'dropdown-item text-muted';
-             noResult.textContent = 'No results found';
-             searchResults.appendChild(noResult);
-             searchResults.style.display = 'block';
           }
         })
         .catch(error => {
-          console.error('Error fetching search results:', error);
-          searchResults.style.display = 'none';
+          console.error('Error fetching task notifications:', error);
         });
+    }
+
+    if (window.isAuthenticated) {
+      setInterval(checkTaskNotifications, 30000);
+      checkTaskNotifications();
+    }
+    
+    // --- 4. NEW: Initialize flatpickr ---
+    flatpickr(".datetime-picker", {
+        enableTime: true,       // Allow time selection
+        dateFormat: "Y-m-d H:i", // The format Django needs
+        altInput: true,         // Show a human-friendly format to the user
+        altFormat: "F j, Y at h:i K" // e.g., "October 31, 2025 at 09:30 AM"
     });
 
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('.search-container')) {
-        searchResults.style.display = 'none';
-      }
-    });
-  }
-
-  // --- 2. NEW: DEADLINE NOTIFICATION POLLING SCRIPT ---
-  const notificationContainer = document.getElementById('notification-container');
-  const notificationUrl = "{% url 'notes:task_notifications' %}";
-
-  function checkTaskNotifications() {
-    fetch(notificationUrl)
-      .then(response => response.json())
-      .then(data => {
-        if (data.tasks && data.tasks.length > 0) {
-          data.tasks.forEach(task => {
-            // Create the alert HTML
-            const alertHTML = `
-              <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Task Due Soon!</strong><br>
-                "${task.title}" is due at ${task.due_date_str}.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            `;
-            // Add the alert to the container
-            notificationContainer.insertAdjacentHTML('beforeend', alertHTML);
-          });
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching task notifications:', error);
-      });
-  }
-
-  // Check for notifications every 30 seconds (30000 milliseconds)
-  // You can change this interval
- if (window.isAuthenticated) {
-    setInterval(checkTaskNotifications, 30000);
-    // Also check once on page load
-    checkTaskNotifications();
-  }
-
-});
-</script>
-{% endblock %}
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  });
+  </script>
+  {% endblock %}
 
 </body>
-
-<footer class="bg-light text-center text-lg-start mt-5 py-3">
-  <div class="container">
-    <p class="mb-0">&copy; {{ year }} Auremind. All rights reserved.</p>
-    <a href="{% url 'notes:about' %}">About</a> |
-    <a href="#">Contact</a> |
-    <a href="#">Privacy Policy</a>
-  </div>
-</footer>
-
 </html>

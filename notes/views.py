@@ -19,21 +19,15 @@ import mimetypes # To guess the file type
 
 @login_required
 def search_notes(request):
-    """
-    A view to handle live search requests and return matching notes as JSON.
-    """
     query = request.GET.get('q', '')
     notes = []
-    # Only perform a search if the query is at least 3 characters long
     if query and len(query) > 2:
-        # Search in both title and content, limit results to the top 10
         note_results = Note.objects.filter(
             user=request.user
         ).filter(
-            Q(title__icontains=query) | Q(encrypted_content__icontains=query) # Search encrypted field
+            Q(title__icontains=query) | Q(encrypted_content__icontains=query)
         ).order_by('-created_at')[:10]
         
-        # Format the results for the JSON response
         for note in note_results:
             notes.append({
                 'id': note.id,
@@ -46,19 +40,16 @@ def search_notes(request):
 
 @login_required
 def home(request):
-    q = request.GET.get('q', '')
-    notes = Note.objects.filter(user=request.user)
-    if q:
-        # Note: Searching encrypted content directly like this is inefficient and
-        # may not work depending on the database. 
-        # A proper search solution would require a different approach.
-        notes = notes.filter(Q(title__icontains=q)) 
-    paginator = Paginator(notes.order_by('-created_at'), 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    recent_notes = Note.objects.filter(user=request.user).order_by('-created_at')[:5]
+    upcoming_tasks = Task.objects.filter(
+        user=request.user, 
+        due_date__gte=timezone.now()
+    ).order_by('due_date')[:5]
+
     context = {
-        'page_obj': page_obj,
-        'q': q,
+        'total_notes': Note.objects.filter(user=request.user).count(),
+        'recent_notes': recent_notes,
+        'upcoming_tasks': upcoming_tasks,
         'year': datetime.now().year,
     }
     return render(request, 'notes/dashboard.html', context)
@@ -71,7 +62,7 @@ def note_create(request):
         if form.is_valid():
             note = form.save(commit=False)
             note.user = request.user
-            note.save() # The form's save() method now handles encryption
+            note.save() 
             messages.success(request, f"Note '{note.title}' created successfully!")
             return redirect('notes:note')
         else:
@@ -83,7 +74,7 @@ def note_create(request):
 
 @login_required
 def note_update(request, pk):
-    note = get_object_or_404(Note, pk=pk, user=request.user) # Ensure user owns note
+    note = get_object_or_404(Note, pk=pk, user=request.user) 
     if request.method == 'POST':
         form = NoteForm(request.POST, request.FILES, instance=note)
         if form.is_valid():
@@ -98,16 +89,16 @@ def note_update(request, pk):
 
 @login_required
 def note_delete(request, pk):
-    note = get_object_or_404(Note, pk=pk, user=request.user) # Ensure user owns note
+    note = get_object_or_404(Note, pk=pk, user=request.user) 
     if request.method == 'POST':
         note.delete()
         messages.success(request, f"Note '{note.title}' updated successfully!")
         return redirect('notes:note')
     return render(request, 'notes/confirm_delete.html', {'note': note})
 
-@login_required # Added login_required
+@login_required 
 def note_detail(request, pk):
-    note = get_object_or_404(Note, pk=pk, user=request.user) # Ensure user owns note
+    note = get_object_or_404(Note, pk=pk, user=request.user) 
     return render(request, 'notes/note_detail.html', {'note': note})
 
 def register(request):
@@ -125,9 +116,8 @@ def register(request):
 @login_required
 def dashboard(request):
     total_notes = Note.objects.filter(user=request.user).count()
-    context = {'total_notes': total_notes, 'year': datetime.now().year} # Added year
+    context = {'total_notes': total_notes, 'year': datetime.now().year} 
     return render(request, 'notes/dashboard.html', context)
-
 
 
 @login_required
@@ -135,7 +125,6 @@ def note(request):
     q = request.GET.get('q', '')
     notes = Note.objects.filter(user=request.user)
     if q:
-        # As mentioned in home(), direct search on encrypted data is not ideal
         notes = notes.filter(Q(title__icontains=q))
     paginator = Paginator(notes.order_by('-created_at'), 10)
     page_number = request.GET.get('page')
@@ -149,7 +138,6 @@ def note(request):
 
 @login_required
 def files(request):
-    # Updated to check for the new attachment fields
     notes_with_files = Note.objects.filter(user=request.user).exclude(attachment_name__isnull=True).exclude(attachment_name__exact='')
     context = {
         'notes_with_files': notes_with_files,
@@ -157,7 +145,6 @@ def files(request):
     return render(request, 'notes/files.html', context)
 
 
-# --- NEW VIEW TO SERVE DECRYPTED FILES ---
 @login_required
 def serve_attachment(request, pk):
     note = get_object_or_404(Note, pk=pk, user=request.user)
@@ -167,14 +154,11 @@ def serve_attachment(request, pk):
     if decrypted_bytes is None:
         raise Http404("No attachment found or decryption failed.")
 
-    # Guess the content-type (e.g., 'image/jpeg') from the file name
     content_type, _ = mimetypes.guess_type(file_name)
     if content_type is None:
-        content_type = 'application/octet-stream' # Default fallback
+        content_type = 'application/octet-stream' 
 
-    # Create an HTTP response with the decrypted file data
     response = HttpResponse(decrypted_bytes, content_type=content_type)
-    # Add a header to suggest displaying inline or downloading with its original name
     response['Content-Disposition'] = f'inline; filename="{file_name}"'
     return response
 
@@ -183,47 +167,39 @@ def serve_attachment(request, pk):
 def chat_view(request):
     if request.method == 'POST':
         try:
-            # 1. Get data from the AJAX request
             data = json.loads(request.body)
             prompt = data.get('prompt')
-            note_id = data.get('note_id') # Get the new note_id
+            note_id = data.get('note_id') 
 
             if not prompt:
                 return JsonResponse({'error': 'No prompt provided.'}, status=400)
             
             final_prompt = prompt
             
-            # 2. Check if a note_id was provided
             if note_id:
                 try:
-                    # Fetch the note, ensuring it belongs to the user
                     note = Note.objects.get(pk=note_id, user=request.user)
-                    # Prepend the note content as context
                     final_prompt = (
                         f"Please use the following note as context:\n"
                         f"--- NOTE START ---\n"
                         f"Title: {note.title}\n"
-                        f"Content: {note.content}\n" # Uses the .content property getter
+                        f"Content: {note.content}\n" 
                         f"--- NOTE END ---\n\n"
                         f"Now, please respond to this prompt: {prompt}"
                     )
                 except Note.DoesNotExist:
-                    # If note_id is invalid or doesn't belong to user, just ignore it
                     pass 
 
-            # 3. Configure and call the Gemini API
             genai.configure(api_key=settings.GOOGLE_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-pro') # Using 1.5-flash
-            response = model.generate_content(final_prompt) # Use the final_prompt
+            model = genai.GenerativeModel('gemini-2.5-pro') 
+            response = model.generate_content(final_prompt) 
             ai_response = response.text
 
-            # 4. Return the AI response
             return JsonResponse({'response': ai_response})
 
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-    # For GET requests, fetch user's notes and render the chat page
     else:
         user_notes = Note.objects.filter(user=request.user).order_by('-created_at')
         context = {
@@ -232,7 +208,6 @@ def chat_view(request):
         return render(request, 'AI/chat.html', context)
 
 
-# --- ADD THIS NEW VIEW TO SAVE THE CHAT ---
 @login_required
 def save_chat_note(request):
     if request.method == 'POST':
@@ -244,19 +219,14 @@ def save_chat_note(request):
             if not prompt or not ai_response:
                 return JsonResponse({'error': 'Missing prompt or response.'}, status=400)
 
-            # Create a title from the first few words of the AI response
             title = ' '.join(ai_response.split()[:5]) + "..."
-            
-            # Create the note content
-            # Prompt already contains context info if it was used
             content = f"**My Prompt:**\n{prompt}\n\n**AI Response:**\n{ai_response}"
 
-            # Create the note
             new_note = Note(
                 user=request.user,
                 title=f"Chat: {title}"
             )
-            new_note.content = content # Use the .content setter to encrypt
+            new_note.content = content 
             new_note.save()
 
             return JsonResponse({'status': 'success', 'message': 'Note saved!'})
@@ -267,7 +237,7 @@ def save_chat_note(request):
     return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
 def about(request):
-    return render(request, 'notes/about.html', {'year': datetime.now().year}) # Added year
+    return render(request, 'notes/about.html', {'year': datetime.now().year}) 
     
 @login_required
 def calendar_view(request, year=None, month=None):
@@ -275,29 +245,26 @@ def calendar_view(request, year=None, month=None):
     year = int(year) if year else today.year
     month = int(month) if month else today.month
 
-    # 1. Fetch only tasks, and order them by time
     tasks = Task.objects.filter(
         user=request.user, 
         due_date__year=year, 
         due_date__month=month
-    ).order_by('due_date') # order_by also sorts by time
+    ).order_by('due_date') 
 
-    # 2. Create the new calendar structure
     calendar_tasks = {}
     
-    # Add tasks to the structure
     for task in tasks:
         day = task.due_date.day
         if day not in calendar_tasks:
             calendar_tasks[day] = []
-        calendar_tasks[day].append(task) # Add the whole task object
+        calendar_tasks[day].append(task) 
 
     total_days = monthrange(year, month)[1]
     
     context = {
         'year': year,
         'month': month,
-        'calendar_tasks': calendar_tasks, # Pass the new task structure
+        'calendar_tasks': calendar_tasks, 
         'total_days': total_days,
         'today_day': today.day if today.year == year and today.month == month else None,
     }
@@ -305,6 +272,7 @@ def calendar_view(request, year=None, month=None):
 
 @login_required
 def task(request):
+    # --- REVERTED: Fetches all tasks again ---
     tasks = Task.objects.filter(user=request.user).order_by('due_date')
     context = {
         'tasks': tasks,
@@ -313,7 +281,9 @@ def task(request):
 
 @login_required
 def task_create(request):
+    # --- REVERTED: Removed parent_pk ---
     if request.method == 'POST':
+        # --- REVERTED: Removed user=request.user ---
         form = TimeScheduleForm(request.POST)
         if form.is_valid():
             task = form.save(commit=False)
@@ -324,6 +294,7 @@ def task_create(request):
         else:
             return render(request, 'task/task_form.html', {'form': form})
     else:
+        # --- REVERTED: Removed user=request.user ---
         form = TimeScheduleForm()
     return render(request, 'task/task_form.html', {'form': form})
 
@@ -331,6 +302,7 @@ def task_create(request):
 def task_update(request, pk):
     task = get_object_or_404(Task, pk=pk, user=request.user) 
     if request.method == 'POST':
+        # --- REVERTED: Removed user=request.user ---
         form = TimeScheduleForm(request.POST, instance=task)
         if form.is_valid():
             form.save()
@@ -339,6 +311,7 @@ def task_update(request, pk):
         else:
             return render(request, 'task/task_form.html', {'form': form, 'task': task})
     else:
+        # --- REVERTED: Removed user=request.user ---
         form = TimeScheduleForm(instance=task)
     return render(request, 'task/task_form.html', {'form': form, 'task': task})
 
@@ -353,45 +326,26 @@ def task_delete(request, pk):
 
 @login_required
 def check_task_notifications(request):
-    """
-    Checks for tasks due soon and returns them as JSON.
-    This view is meant to be polled by JavaScript.
-    """
     now = timezone.now()
-    # Find tasks due between now and 30 minutes from now
     upcoming_tasks = Task.objects.filter(
         user=request.user,
-        due_date__lte=now + timedelta(minutes=30), # Due in the next 30 mins
-        due_date__gt=now                          # But not already past
+        due_date__lte=now + timedelta(minutes=30), 
+        due_date__gt=now                          
     )
 
-    # We'll use the session to only notify once per task
     notified_tasks = request.session.get('notified_tasks', [])
-    
     tasks_to_notify = []
-    
-    # --- ADD THIS LINE ---
-    # Get the current active timezone (which you set in settings.py)
     local_tz = timezone.get_current_timezone()
 
     for task in upcoming_tasks:
         if task.pk not in notified_tasks:
-            
-            # --- ADD THIS LINE ---
-            # Convert the task's UTC time to your local timezone
             local_due_date = task.due_date.astimezone(local_tz)
-
             tasks_to_notify.append({
                 'id': task.pk,
                 'title': task.title,
-                
-                # --- MODIFY THIS LINE ---
-                # Use the new local_due_date variable for formatting
                 'due_date_str': local_due_date.strftime("%#I:%M %p") 
             })
-            # Add to session list so we don't notify again
             notified_tasks.append(task.pk)
 
     request.session['notified_tasks'] = notified_tasks
-
     return JsonResponse({'tasks': tasks_to_notify})

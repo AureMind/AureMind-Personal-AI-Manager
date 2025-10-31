@@ -24,9 +24,6 @@ class Note(models.Model):
     # This field stores the original file name (e.g., "cat.jpg")
     attachment_name = models.CharField(max_length=255, blank=True, null=True)
     
-    # We no longer use the FileField
-    # attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
-
     @property
     def content(self) -> str:
         """
@@ -78,6 +75,9 @@ class Task(models.Model):
     title = models.CharField(max_length=200)
     due_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # --- The 'parent' field has been REMOVED ---
 
     def __str__(self):
+        # --- Reverted __str__ method ---
         return f"Schedule for {self.title}"
