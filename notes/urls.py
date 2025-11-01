@@ -28,6 +28,8 @@ urlpatterns = [
 
     # Task CRUD
     path('calendar/', views.calendar_view, name='calendar'),
+    path('calendar/<int:year>/<int:month>/', views.calendar_view, name='calendar_month'),
+    path('calendar/<int:year>/<int:month>/<int:day>/', views.calendar_day_view, name='calendar_day'),
     path('task/', views.task, name='task'),
     path('task/create/', views.task_create, name='task_create'),
     

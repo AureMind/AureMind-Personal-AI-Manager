@@ -24,7 +24,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+SECRET_KEY = os.environ.get('DJANGO_KEY')
 FERNET_KEY = b'8FwtQCZ1Qd6ozeREDK3Co_sUhr7J2PDbzrgFUvWFvdA='
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -136,4 +136,4 @@ LOGOUT_REDIRECT_URL = 'notes:login'       # where to go after logout
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-GOOGLE_API_KEY = os.environ.get('OPENAI_API_KEY')
+GOOGLE_API_KEY = os.environ.get('AI_API_KEY')

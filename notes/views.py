@@ -15,6 +15,7 @@ from django.conf import settings
 from django.urls import reverse
 import google.generativeai as genai
 import mimetypes # To guess the file type
+import calendar
 
 
 @login_required
@@ -242,31 +243,68 @@ def about(request):
 @login_required
 def calendar_view(request, year=None, month=None):
     today = date.today()
+    
+    # --- Use URL params or default to today's date ---
     year = int(year) if year else today.year
     month = int(month) if month else today.month
 
+    # --- Get tasks for the *entire month* ---
     tasks = Task.objects.filter(
         user=request.user, 
         due_date__year=year, 
         due_date__month=month
     ).order_by('due_date') 
 
+    # --- Group tasks by day for easy lookup in the template ---
     calendar_tasks = {}
-    
     for task in tasks:
         day = task.due_date.day
         if day not in calendar_tasks:
             calendar_tasks[day] = []
         calendar_tasks[day].append(task) 
 
-    total_days = monthrange(year, month)[1]
+    # --- NEW: Generate the calendar grid (list of weeks) ---
+    # This creates a list of lists, e.g., [[0, 0, 1, 2, 3, 4, 5], [6, ...]]
+    # It respects the correct start day of the week.
+    cal = calendar.Calendar(firstweekday=calendar.SUNDAY) # Start week on Sunday
+    weeks = cal.monthdayscalendar(year, month)
+    
+    # --- NEW: Get day headers (Sun, Mon, Tue...) ---
+    day_headers = calendar.day_abbr[calendar.SUNDAY:] + calendar.day_abbr[:calendar.SUNDAY]
+
+
+    # --- NEW: Calculate next/previous month for navigation ---
+    current_date = date(year, month, 1)
+    
+    # Previous Month
+    prev_date = current_date - timedelta(days=1) # Go to the last day of the previous month
+    prev_year = prev_date.year
+    prev_month = prev_date.month
+
+    # Next Month
+    # Find the first day of the *next* month
+    next_date = (current_date + timedelta(days=32)).replace(day=1) 
+    next_year = next_date.year
+    next_month = next_date.month
     
     context = {
         'year': year,
         'month': month,
-        'calendar_tasks': calendar_tasks, 
-        'total_days': total_days,
+        'month_name': current_date.strftime('%B'), # e.g., "November"
+        
+        'weeks': weeks,                 # The calendar grid
+        'day_headers': day_headers,     # [Sun, Mon, Tue...]
+        'calendar_tasks': calendar_tasks, # Tasks grouped by day {1: [task1], 15: [task2]}
+        
+        # Highlight today
         'today_day': today.day if today.year == year and today.month == month else None,
+        'today_date': today,
+        
+        # Navigation links
+        'prev_year': prev_year,
+        'prev_month': prev_month,
+        'next_year': next_year,
+        'next_month': next_month,
     }
     return render(request, 'task/calendar.html', context)
 
@@ -349,3 +387,33 @@ def check_task_notifications(request):
 
     request.session['notified_tasks'] = notified_tasks
     return JsonResponse({'tasks': tasks_to_notify})
+
+@login_required
+def calendar_day_view(request, year, month, day):
+    try:
+        # Create a date object for the specific day
+        day_date = date(year, month, day)
+    except ValueError:
+        # Handle invalid date, e.g., Feb 30th
+        raise Http404("Invalid date.")
+
+    # Use the current timezone for correct date filtering
+    current_tz = timezone.get_current_timezone()
+    
+    # --- FIX: Create aware datetimes using tzinfo argument ---
+    start_of_day = datetime.combine(day_date, datetime.min.time(), tzinfo=current_tz)
+    end_of_day = datetime.combine(day_date, datetime.max.time(), tzinfo=current_tz)
+    # --- END FIX ---
+
+    tasks = Task.objects.filter(
+        user=request.user,
+        due_date__gte=start_of_day,
+        due_date__lte=end_of_day
+    ).order_by('due_date')
+
+    context = {
+        'tasks': tasks,
+        'day_date': day_date, # Pass the date object to the template
+    }
+    # This template should exist from the previous step
+    return render(request, 'task/calendar_day.html', context)
