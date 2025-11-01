@@ -50,7 +50,6 @@
     <aside class="sidebar" id="sidebar">
       {% if user.is_authenticated %}
         <div class="user-profile">
-          <div class="avatar">{{ user.username|first|upper }}</div>
           <span class="username">Hi, {{ user.username }}!</span>
         </div>
 
