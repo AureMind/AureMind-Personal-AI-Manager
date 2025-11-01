@@ -1,10 +1,10 @@
 {% extends 'notes/base.html' %}
-{% block title %}{{ note.title }}{% endblock %}
+{% load markdown_extras %} {% block title %}{{ note.title }}{% endblock %}
 {% block content %}
 <h2>{{ note.title }}</h2>
 <p class="small text-muted">{{ note.created_at|date:"M d, Y H:i" }}</p>
 
-<p>{{ note.content|linebreaks }}</p>
+<div>{{ note.content|markdownify|safe }}</div>
 
 {% if note.due_date %}
 <p><strong>Due:</strong> {{ note.due_date|date:"M d, Y H:i" }}</p>
@@ -19,4 +19,4 @@
 
 <a href="{% url 'notes:edit' pk=note.pk %}" class="btn btn-secondary">Edit</a>
 <a href="{% url 'notes:delete' pk=note.pk %}" class="btn btn-danger">Delete</a>
-{% endblock %} 
+{% endblock %}

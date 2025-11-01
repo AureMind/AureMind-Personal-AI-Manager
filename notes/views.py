@@ -16,6 +16,7 @@ from django.urls import reverse
 import google.generativeai as genai
 import mimetypes # To guess the file type
 import calendar
+import markdown # <-- IMPORT ADDED
 
 
 @login_required
@@ -194,9 +195,14 @@ def chat_view(request):
             genai.configure(api_key=settings.GOOGLE_API_KEY)
             model = genai.GenerativeModel('gemini-2.5-pro') 
             response = model.generate_content(final_prompt) 
-            ai_response = response.text
+            
+            # --- MODIFICATIONS HERE ---
+            ai_response_raw = response.text
+            # Use the 'fenced_code' extension
+            ai_response_html = markdown.markdown(ai_response_raw, extensions=['fenced_code'])
 
-            return JsonResponse({'response': ai_response})
+            return JsonResponse({'response': ai_response_html, 'raw_response': ai_response_raw})
+            # --- END MODIFICATIONS ---
 
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)

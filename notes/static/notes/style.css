@@ -431,3 +431,32 @@ body {
     overflow: hidden;
   }
 }
+
+/* === 10. NEW: Markdown & Code Block Styling === */
+            
+/* Style for code blocks (pre-formatted text from ```) */
+pre {
+  background-color: #f4f4f4;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto; /* Allow horizontal scrolling for wide code */
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9rem;
+}
+
+/* Style for inline code snippets (using single backticks `) */
+code {
+  background-color: #f4f4f4;
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9rem;
+}
+
+/* Ensure code inside a pre block doesn't get the inline styles */
+pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}

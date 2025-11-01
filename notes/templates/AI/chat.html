@@ -104,15 +104,23 @@ document.getElementById('chat-form').addEventListener('submit', async function(e
         const contentDiv = document.createElement('div');
         contentDiv.className = 'output-cell-content';
         
-        let aiResponseText = '';
+        // --- *** MODIFICATIONS HERE *** ---
+        let aiResponseText_HTML = '';
+        let aiResponseText_RAW = ''; // For saving
+
         if (data.response) {
-            aiResponseText = data.response;
+            aiResponseText_HTML = data.response; // This is the HTML
+            aiResponseText_RAW = data.raw_response; // This is the raw markdown
         } else if (data.error) {
-            aiResponseText = 'Error: ' + data.error;
+            aiResponseText_HTML = 'Error: ' + data.error;
+            aiResponseText_RAW = 'Error: ' + data.error; // Save the error
             contentDiv.style.color = 'red';
         }
-        contentDiv.textContent = aiResponseText;
+        
+        contentDiv.innerHTML = aiResponseText_HTML; // <--- Use innerHTML to render HTML
         outputCell.appendChild(contentDiv);
+        // --- *** END MODIFICATIONS *** ---
+
 
         // --- Create and add the Save button (if no error) ---
         if (data.response) {
@@ -131,10 +139,12 @@ document.getElementById('chat-form').addEventListener('submit', async function(e
                             'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}'
                         },
+                        // --- *** MODIFICATION HERE *** ---
                         body: JSON.stringify({
                             prompt: promptDisplay, // Save the prompt *with* context info
-                            ai_response: aiResponseText
+                            ai_response: aiResponseText_RAW // <--- Save the RAW text
                         })
+                        // --- *** END MODIFICATION ---
                     });
                     const saveData = await saveResponse.json();
                     

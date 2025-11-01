@@ -1,6 +1,7 @@
 {% extends 'notes/base.html' %}
 {% block title %}All Notes{% endblock %}
-{% load file_filters %} {% block content %}
+{% load file_filters %} 
+{% load markdown_extras %} {% block content %}
 <h1>Notes</h1>
 
 <ul class="list-group">
@@ -13,7 +14,7 @@
       {% endif %}
       
       <div class="small text-muted">{{ note.created_at|date:"M d, Y H:i" }}</div>
-      <div>{{ note.content|truncatewords:25 }}</div>
+      <div>{{ note.content|markdownify|striptags|truncatewords:25 }}</div>
 
       {% if note.attachment_name %}
         {% with note.attachment_name|lower as file_name %}
