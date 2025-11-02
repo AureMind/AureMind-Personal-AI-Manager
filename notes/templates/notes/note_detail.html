@@ -6,9 +6,6 @@
 
 <div>{{ note.content|markdownify|safe }}</div>
 
-{% if note.due_date %}
-<p><strong>Due:</strong> {{ note.due_date|date:"M d, Y H:i" }}</p>
-{% endif %}
 
 {% if note.attachment_name %}
 <p>

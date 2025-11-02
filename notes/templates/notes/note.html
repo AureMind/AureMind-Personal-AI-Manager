@@ -2,9 +2,11 @@
 {% block title %}All Notes{% endblock %}
 {% load file_filters %} 
 {% load markdown_extras %} {% block content %}
-<h1>Notes</h1>
+<h1 class="mb-3">Notes</h1>
 
-<ul class="list-group">
+<a href="{% url 'notes:create' %}" class="btn btn-primary mb-3"><i class="bi bi-plus-lg"></i> New Note</a>
+
+<ul class="list-group mt-3">
   {% for note in page_obj %}
     <li class="list-group-item">
       <a href="{% url 'notes:detail' pk=note.pk %}"><strong>{{ note.title }}</strong></a>
