@@ -1,6 +1,7 @@
 {% extends "notes/base.html" %}
+{% block title %}{% if task %}Edit Task{% else %}Create New Task{% endif %}{% endblock %}
 {% block content %}
-<div class="container mt-4">
+<div class="form-container">
   <h2>{% if task %}Edit Task{% else %}Create New Task{% endif %}</h2>
 
   <form method="POST">
@@ -19,7 +20,7 @@
       {{ form.due_date.errors }}
     </div>
 
-    <button type="submit" class="btn btn-success">Save Task</button>
+    <button type="submit" class="btn btn-primary">Save Task</button>
   </form>
 </div>
 {% endblock %}

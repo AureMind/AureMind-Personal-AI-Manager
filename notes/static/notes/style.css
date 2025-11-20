@@ -1,12 +1,17 @@
 /* === 1. General Resets and Body === */
 :root {
-  --app-bg: #f8f9fa;
-  --sidebar-bg: #ffffff;
+  --app-bg: #f8f9fa;        /* Main App Background (Off-white) */
+  --sidebar-bg: #ffffff;    /* Sidebar/Card White Background */
   --card-bg: #ffffff;
-  --border-color: #dee2e6;
-  --text-color: #212529;
-  --text-muted: #6c757d;
-  --primary-color: #0d6efd;
+  --border-color: #e0e0e0;
+  --text-color: #212529;    /* Near Black */
+  --text-muted: #6c757d;    /* Gray */
+  --primary-color: #3b82f6; /* A clean, modern blue for primary actions */
+  --secondary-bg-accent: #f5f5f5; /* Light accent for headers/hover */
+  
+  /* Floating Card Shadows to match the reference UI */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08); 
 }
 
 body {
@@ -16,15 +21,16 @@ body {
   padding: 0;
   color: var(--text-color);
   font-size: 15px;
-  /* Prevent body scrolling when mobile sidebar is open */
   overflow-x: hidden;
+  line-height: 1.6; 
 }
 
-/* === 2. Desktop 3-Column Layout === */
+/* === 2. Desktop 3-Column Layout (Adjusted for wider content area) === */
 .app-container {
+  /* Reduced Sidebar width to match Notion/Reference UI */
   display: grid;
-  grid-template-columns: 240px 1fr 280px; /* Sidebar | Main | Right Gutter */
-  grid-template-rows: auto 1fr auto; /* Header | Content | Footer */
+  grid-template-columns: 200px 1fr 280px; /* Sidebar | Main | Right Gutter */
+  grid-template-rows: auto 1fr auto; 
   grid-template-areas:
     "header header header"
     "sidebar main-content right-sidebar"
@@ -32,7 +38,7 @@ body {
   min-height: 100vh;
 }
 
-/* === 3. App Header === */
+/* === 3. App Header (Kept clean) === */
 .app-header {
   grid-area: header;
   display: flex;
@@ -42,17 +48,15 @@ body {
   background-color: var(--sidebar-bg);
   border-bottom: 1px solid var(--border-color);
   height: 60px;
-  position: sticky; /* Make header sticky */
+  position: sticky; 
   top: 0;
-  z-index: 1020; /* Below sidebar overlay */
+  z-index: 1020; 
 }
 .app-header .navbar-logo {
   height: 40px;
 }
 
-/* === 4. Left Sidebar & Mobile Toggle === */
-
-/* Mobile-only hamburger button (hidden on desktop) */
+/* === 4. Left Sidebar & Mobile Toggle (Styling for minimalist links) === */
 .sidebar-toggle {
   display: none;
   font-size: 1.75rem;
@@ -62,35 +66,31 @@ body {
   padding: 0 0.5rem;
 }
 
-/* Desktop sidebar */
 .sidebar {
   grid-area: sidebar;
   background-color: var(--sidebar-bg);
   padding: 1.5rem;
   border-right: 1px solid var(--border-color);
   transition: transform 0.3s ease-in-out;
-  /* Ensure sidebar content can scroll if needed */
   overflow-y: auto;
 }
 
-/* --- NEW STYLES FOR SIDEBAR LINKS --- */
+/* --- Sidebar Links (More compact/minimalist) --- */
 .sidebar a {
-  display: block; /* Makes links take full width */
-  padding: 10px 5px; /* Adds vertical spacing */
-  font-size: 16px; /* Increases font size (default is 15px) */
-  font-weight: 500; /* Makes font a bit bolder */
-  color: var(--text-color); /* Ensures consistent color */
-  text-decoration: none; /* Removes underline */
-  border-radius: 6px; /* Adds slightly rounded edges */
+  display: block;
+  padding: 8px 5px; /* Reduced vertical padding */
+  font-size: 15px; 
+  font-weight: 400; 
+  color: var(--text-color);
+  text-decoration: none;
+  border-radius: 6px;
 }
 
 .sidebar a:hover {
-  background-color: var(--app-bg);
+  background-color: var(--secondary-bg-accent);
 }
-/* --- END OF NEW STYLES --- */
+/* --- END OF SIDEBAR STYLES --- */
 
-
-/* Dark overlay for mobile */
 .sidebar-overlay {
   display: none;
   position: fixed;
@@ -99,7 +99,7 @@ body {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1030; /* Below sidebar, above content */
+  z-index: 1030;
 }
 .sidebar-overlay.show {
   display: block;
@@ -109,7 +109,7 @@ body {
 .main-content {
   grid-area: main-content;
   padding: 2rem;
-  overflow-y: auto; /* Allow main content to scroll */
+  overflow-y: auto;
 }
 .right-sidebar {
   grid-area: right-sidebar;
@@ -125,13 +125,116 @@ body {
   text-align: center;
 }
 
-/* === 7. Merged Styles from calendar.html === */
+/* === 7. Component Styling (Cards, Forms, Lists) - Key changes for aesthetic === */
+
+/* Floating Card UI */
+.card-ui {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md); /* Stronger shadow for "floating" effect */
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.card-ui .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: var(--secondary-bg-accent);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.content-wrapper {
+  max-width: 900px; /* Allow more width for content */
+  margin: 0 auto;
+}
+
+.form-container, .login-container {
+  max-width: 450px;
+  margin: 40px auto;
+  padding: 2rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+/* Consistent styling for form elements and buttons */
+.form-control, .form-select, .btn {
+  border-radius: 6px !important;
+}
+
+/* Hide the default Django labels (used for Keep-style forms) */
+.form-container label {
+    display: none !important;
+}
+.form-container .form-label {
+    display: none !important;
+}
+
+
+/* Remove default list styling (used for Kanban/Board view) */
+.list-group-flush {
+    border-top: none;
+    border-bottom: none;
+}
+.list-group-item {
+    padding: 1rem 1.5rem;
+    border-left: none;
+    border-right: none;
+}
+.list-group-item:first-child { border-top: none; }
+.list-group-item:last-child { border-bottom: none; }
+
+
+/* --- NEW: Kanban/Board View Layout for Notes --- */
+.notes-board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding-top: 10px; /* Separator from heading */
+}
+
+/* Note Card Styling - adapted from list-group-item */
+.note-card {
+  background-color: var(--card-bg);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm); /* Lighter shadow on individual cards */
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: auto; /* Allow height to adapt */
+}
+
+.note-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.note-card a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.note-card .card-actions {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.note-card:hover .card-actions {
+    opacity: 1;
+}
+
+/* === 8. Merged Styles from calendar.html (Reverted Calendar colors to neutral) === */
 .calendar-container {
   width: 100%;
   border: 1px solid var(--border-color);
   background-color: var(--card-bg);
   border-radius: 8px;
-  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 .calendar-header {
   display: flex;
@@ -139,6 +242,7 @@ body {
   align-items: center;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
+  background-color: var(--secondary-bg-accent); 
 }
 .calendar-header h1 {
   font-size: 1.5rem;
@@ -195,7 +299,7 @@ body {
   color: var(--text-color);
 }
 .calendar-day-cell.today .day-number {
-  background-color: var(--primary-color);
+  background-color: var(--primary-color); /* Use primary blue */
   color: #fff;
   border-radius: 50%;
   width: 28px;
@@ -209,6 +313,7 @@ body {
   color: var(--text-muted);
 }
 .task-badge {
+  /* Reverted to a light blue/neutral badge for simplicity */
   display: block;
   white-space: nowrap;
   overflow: hidden;
@@ -217,194 +322,170 @@ body {
   padding: 3px 6px;
   border-radius: 4px;
   background-color: #e6f7ff;
-  color: #0d6efd;
+  color: var(--primary-color);
   border: 1px solid #b3e0ff;
   margin-top: 4px;
 }
 
-/* === 8. Merged Styles from chat.html === */
+/* === 9. AI Chat Styles (Modified for Gemini Look) === */
+
+/* Container to manage the chat history scroll area and the fixed input */
 #chat-container {
   display: flex;
   flex-direction: column;
-  max-width: 800px;
+  max-width: 900px; /* Make it wider */
   margin: 0 auto;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  overflow: visible; /* Allow input bar to float */
+  box-shadow: none;
+  min-height: 70vh;
 }
+
 #chat-history {
   flex-grow: 1;
   padding: 20px;
   overflow-y: auto;
   max-height: 60vh;
-  background-color: #fcfcfc;
+  background-color: var(--app-bg);
+  /* Use padding-bottom for space for the floating input bar */
+  padding-bottom: 100px; 
 }
 .chat-cell {
-  margin-bottom: 15px;
-  padding: 10px 15px;
-  border-radius: 6px;
+  margin-bottom: 25px; /* Increased margin for better separation */
+  padding: 0; /* Removed cell padding to make output blend into history */
+  border-radius: 0;
   position: relative;
-  white-space: pre-wrap; /* Allow newlines */
+  white-space: pre-wrap; 
 }
 .input-cell {
-  background-color: #f0f4f8;
-  border: 1px solid #e0e7ee;
+  /* User input should look distinct, but simple */
+  background-color: transparent;
+  border: none;
+  padding: 0 0 0 50px; /* Indent user input to the right (like most chat apps) */
+  text-align: right;
 }
 .input-cell::before {
-  content: "In [ ]:";
+  content: "You:";
   font-weight: bold;
-  color: #0d6efd;
-  margin-right: 10px;
-}
-.output-cell {
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-}
-.output-cell-content {
-  padding-right: 70px; /* Make space for the save button */
-}
-.output-cell::before {
-  content: "Out[ ]:";
-  font-weight: bold;
-  color: #dc3545;
+  color: var(--primary-color);
   margin-right: 10px;
   display: block;
-  margin-bottom: 5px;
+}
+.output-cell {
+  /* AI output - Remove the Box, Border, and Shadow for a clean look */
+  background-color: transparent;
+  border: none;
+  box-shadow: none; 
+  padding: 0 50px 0 0; /* Indent AI output to the left */
+  text-align: left;
+}
+.output-cell-content {
+  padding-right: 70px; /* Keep space for the save button */
+  display: inline-block; /* Allows width to shrink if content is short */
+  max-width: 100%;
+}
+.output-cell::before {
+  /* HIDE THE "Out[ ]:" LABEL */
+  content: ""; 
+  display: none;
 }
 .save-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 0; /* Aligned to the top of the message */
+  right: 0;
 }
+
+/* Style the Input Bar Container (The "floating pill" base) */
 #chat-form {
+  position: sticky;
+  bottom: 0;
+  z-index: 50; /* Above regular content */
+  
   display: flex;
-  flex-wrap: nowrap; /* Default to no-wrap */
-  padding: 15px;
-  border-top: 1px solid #ddd;
-  background-color: #f8f9fa;
-  gap: 10px;
+  justify-content: center;
+  align-items: flex-end; /* Align prompt and button */
+  
+  padding: 20px 0; 
+  background-color: var(--app-bg); /* Use app bg to make the bar stand out */
 }
+
+/* Style the Actual Input Box (The pill shape and shadow) */
+.floating-input-wrapper {
+    display: flex;
+    flex-grow: 1;
+    max-width: 800px; /* Constrain the input width */
+    
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 25px; /* Pill shape */
+    box-shadow: var(--shadow-md); /* Prominent shadow */
+    
+    padding: 8px 15px; /* Inner padding for text */
+    gap: 10px;
+}
+
 #prompt-container {
-  flex-grow: 1;
-  display: flex;
-  min-width: 200px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    min-width: 200px;
 }
+
 #chat-prompt {
   flex-grow: 1;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  border: none !important;
+  box-shadow: none !important;
+  resize: none !important;
+  padding: 0; /* Remove default padding inside the input field */
+  background-color: transparent !important;
+  min-height: 20px; /* Start height */
+  overflow: hidden; /* Hide scrollbar */
 }
+
+/* ADJUSTED PADDING/WIDTH FOR SELECT BOX */
 #note-select {
-  max-width: 200px; /* Limit width of dropdown */
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-left: 0;
-  background-color: #fff;
-  color: #6c757d;
+  border: none !important;
+  background-color: transparent !important;
+  max-width: 180px !important; /* INCREASED WIDTH */
+  padding-right: 1.5rem; /* Ensure space for the arrow (standard Bootstrap dropdown padding) */
 }
+
+/* Style the Send button */
 #controls-container {
   display: flex;
   align-items: center;
-  margin-left: auto; /* Push controls to the right */
-}
-#spinner {
-  display: none;
-  margin-right: 10px;
+  margin-left: 10px; /* Separate button slightly */
 }
 
 
-/* === 9. NEW: Mobile Responsive Media Queries === */
+/* === 10. NEW: Mobile Responsive Media Queries (Adjustments for Input Bar) === */
 
 @media (max-width: 992px) {
-  /* --- Main Layout --- */
-  .app-container {
-    /* Change to 1-column layout for mobile */
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-    grid-template-areas:
-      "header"
-      "main-content"
-      "footer";
-  }
-
-  .right-sidebar {
-    display: none; /* Hide the right gutter */
-  }
-
-  .main-content {
-    padding: 1rem; /* Reduce padding on mobile */
-  }
+  /* ... existing mobile styles ... */
   
-  .app-header .search-container {
-    display: none; /* Hide search bar in header on small screens */
+  .input-cell, .output-cell {
+      padding: 0; /* Remove horizontal indent on mobile */
   }
 
-  /* --- Mobile Sidebar --- */
-  .sidebar-toggle {
-    display: block; /* Show hamburger button */
-  }
-
-  .sidebar {
-    /* Move sidebar off-screen and make it fixed */
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100vh;
-    z-index: 1040; /* Above overlay */
-    transform: translateX(-100%);
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    width: 260px; /* Give it a fixed width */
-  }
-
-  .sidebar.show {
-    /* This class is added by JS to slide it in */
-    transform: translateX(0);
-  }
-
-  /* --- Calendar Page --- */
-  .calendar-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-  .calendar-nav {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-  }
-  .calendar-day-cell {
-    min-height: 80px; /* Shorter cells on mobile */
-    padding: 4px;
-  }
-  .day-number {
-    font-size: 0.8rem;
-  }
-  .task-badge {
-    font-size: 0.7rem;
-    padding: 2px 4px;
-    /* Hide time on mobile to save space */
-    font-family: monospace; 
-  }
-  /* Hides the "h:iA" part of the badge text on mobile */
-  .task-badge::first-line {
-    font-size: 0;
-  }
-
-  /* --- Chat Page --- */
-  #chat-form {
-    flex-wrap: wrap; /* Allow wrapping */
-  }
-  #prompt-container {
-    min-width: 100%; /* Take full width */
-    margin-bottom: 10px;
+  .floating-input-wrapper {
+      margin: 0 1rem; /* Add margin on mobile */
+      border-radius: 15px; /* Smaller pill shape */
+      padding: 6px 12px;
+      max-width: 100%;
   }
   #note-select {
-    max-width: 150px; /* Give it a bit more space */
+      display: none; /* Hide note context selector on small screens */
   }
-  #controls-container {
-    width: 100%;
-    justify-content: flex-end;
-    margin-left: 0;
+  .output-cell-content {
+      padding-right: 60px; /* Reduced padding for save button */
+  }
+    
+  /* Adjust form container for mobile */
+  .form-container, .login-container {
+      margin: 20px auto;
+      padding: 1.5rem;
+      box-shadow: none; /* Remove shadow on small screens */
   }
 }
 
@@ -432,7 +513,7 @@ body {
   }
 }
 
-/* === 10. NEW: Markdown & Code Block Styling === */
+/* === 11. NEW: Markdown & Code Block Styling === */
             
 /* Style for code blocks (pre-formatted text from ```) */
 pre {

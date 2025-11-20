@@ -2,26 +2,27 @@
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 
+<div class="content-wrapper">
   <h1 class="h2 mb-4">Welcome, {{ user.username }}!</h1>
 
-  <div class="row">
-    <div class="col-lg-12">
-      
-      <div class="mb-4">
-        <a href="{% url 'notes:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Note</a>
-        <a href="{% url 'notes:task_create' %}" class="btn btn-secondary"><i class="bi bi-plus-lg"></i> New Task</a>
-      </div>
+  <div class="mb-5">
+    <a href="{% url 'notes:create' %}" class="btn btn-primary me-2"><i class="bi bi-plus-lg"></i> New Note</a>
+    <a href="{% url 'notes:task_create' %}" class="btn btn-outline-secondary"><i class="bi bi-plus-lg"></i> New Task</a>
+  </div>
 
+  <div class="row">
+    <div class="col-md-6">
+      
       <div class="card-ui mb-4">
         <div class="card-header">
-          <h5><i class="bi bi-stickies text-muted me-2"></i>Recent Notes</h5>
+          <h5 class="mb-0"><i class="bi bi-stickies text-muted me-2"></i>Recent Notes</h5>
           <a href="{% url 'notes:note' %}" class="btn-link">View All</a>
         </div>
         <div class="list-group list-group-flush">
           {% for note in recent_notes %}
             <a href="{% url 'notes:detail' pk=note.pk %}" class="list-group-item list-group-item-action">
-              <span class="item-title">{{ note.title }}</span>
-              <span class="item-subtitle">{{ note.created_at|date:"M d, Y" }}</span>
+              <span class="item-title d-block fw-bold">{{ note.title }}</span>
+              <span class="item-subtitle small text-muted">{{ note.created_at|date:"M d, Y" }}</span>
             </a>
           {% empty %}
             <li class="list-group-item text-muted">You haven't created any notes yet.</li>
@@ -29,24 +30,27 @@
         </div>
       </div>
 
-      <div class="card-ui">
+    </div>
+    
+    <div class="col-md-6">
+      <div class="card-ui mb-4">
         <div class="card-header">
-          <h5><i class="bi bi-check2-square text-muted me-2"></i>Upcoming Tasks</h5>
+          <h5 class="mb-0"><i class="bi bi-check2-square text-muted me-2"></i>Upcoming Tasks</h5>
           <a href="{% url 'notes:task' %}" class="btn-link">View All</a>
         </div>
         <div class="list-group list-group-flush">
           {% for task in upcoming_tasks %}
             <a href="{% url 'notes:task_edit' pk=task.pk %}" class="list-group-item list-group-item-action">
-              <span class="item-title">{{ task.title }}</span>
-              <span class="item-subtitle">Due: {{ task.due_date|date:"M d, Y P" }}</span>
+              <span class="item-title d-block fw-bold">{{ task.title }}</span>
+              <span class="item-subtitle small text-muted">Due: {{ task.due_date|date:"M d, Y P" }}</span>
             </a>
           {% empty %}
             <li class="list-group-item text-muted">You have no upcoming tasks.</li>
           {% endfor %}
         </div>
       </div>
-
     </div>
   </div>
 
+</div>
 {% endblock %}

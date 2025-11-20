@@ -1,62 +1,67 @@
 {% extends 'notes/base.html' %}
 {% block title %}All Notes{% endblock %}
 {% load file_filters %} 
-{% load markdown_extras %} {% block content %}
-<h1 class="mb-3">Notes</h1>
+{% load markdown_extras %} 
 
-<a href="{% url 'notes:create' %}" class="btn btn-primary mb-3"><i class="bi bi-plus-lg"></i> New Note</a>
+{% block content %}
+<div class="content-wrapper">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Notes</h1>
+    <a href="{% url 'notes:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Note</a>
+  </div>
 
-<ul class="list-group mt-3">
-  {% for note in page_obj %}
-    <li class="list-group-item">
-      <a href="{% url 'notes:detail' pk=note.pk %}"><strong>{{ note.title }}</strong></a>
-      
-      {% if note.due_date %}
-        <div class="text-warning">Due: {{ note.due_date|date:"M d, Y" }}</div>
-      {% endif %}
-      
-      <div class="small text-muted">{{ note.created_at|date:"M d, Y H:i" }}</div>
-      <div>{{ note.content|markdownify|striptags|truncatewords:25 }}</div>
-
-      {% if note.attachment_name %}
-        {% with note.attachment_name|lower as file_name %}
-          <div class="mt-2">
-            {% if file_name|endswith:".jpg" or file_name|endswith:".jpeg" or file_name|endswith:".png" or file_name|endswith:".gif" %}
-              <img src="{% url 'notes:serve_attachment' pk=note.pk %}" class="img-fluid" style="max-width:300px;">
-            {% elif file_name|endswith:".pdf" %}
-              <a href="{% url 'notes:serve_attachment' pk=note.pk %}" target="_blank">View PDF ({{ note.attachment_name }})</a>
-            {% elif file_name|endswith:".mp4" or file_name|endswith:".webm" %}
-              <video controls style="max-width:300px;">
-                <source src="{% url 'notes:serve_attachment' pk=note.pk %}" type="video/mp4">
-                Your browser does not support the video tag.
-              </video>
-            {% else %}
-              <a href="{% url 'notes:serve_attachment' pk=note.pk %}" target="_blank">Download File ({{ note.attachment_name }})</a>
+  {% if page_obj.object_list %}
+  
+    <div class="notes-board-grid">
+      {% for note in page_obj %}
+        <div class="note-card">
+          <a href="{% url 'notes:detail' pk=note.pk %}">
+            
+            <h5 class="fw-bold mb-1 text-truncate">{{ note.title }}</h5>
+            
+            {% if note.due_date %}
+              <div class="text-warning small mb-2">Due: {{ note.due_date|date:"M d, Y" }}</div>
             {% endif %}
+            
+            <p class="text-muted small mb-3">
+              {{ note.content|markdownify|striptags|truncatewords:15 }}
+            </p>
+
+            {# Optional: Show attachment thumbnail/link in the card #}
+            {% if note.attachment_name %}
+              <div class="small text-muted border-top pt-2 mt-2">
+                <i class="bi bi-paperclip"></i> Attachment
+              </div>
+            {% endif %}
+            
+          </a>
+
+          <div class="card-actions d-flex justify-content-end pt-2 border-top mt-2">
+            <a class="btn btn-sm btn-link me-2 p-0" href="{% url 'notes:edit' pk=note.pk %}">Edit</a>
+            <a class="btn btn-sm btn-link text-danger p-0" href="{% url 'notes:delete' pk=note.pk %}">Delete</a>
           </div>
-        {% endwith %}
-      {% endif %}
+        </div>
+      {% endfor %}
+    </div>
 
-      <div class="mt-2">
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'notes:edit' pk=note.pk %}">Edit</a>
-        <a class="btn btn-sm btn-danger" href="{% url 'notes:delete' pk=note.pk %}">Delete</a>
-      </div>
-    </li>
-  {% empty %}
-    <li class="list-group-item">No notes found.</li>
-  {% endfor %}
-</ul>
+    <nav class="mt-4">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">Previous</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Next</a></li>
+        {% endif %}
+      </ul>
+    </nav>
 
+  {% else %}
+    <div class="card-ui text-center p-5">
+      <p class="lead mb-0">No notes found. Create one to get started! 📝</p>
+    </div>
+  {% endif %}
 
-<nav class="mt-3">
-  <ul class="pagination">
-    {% if page_obj.has_previous %}
-      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">Previous</a></li>
-    {% endif %}
-    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
-    {% if page_obj.has_next %}
-      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Next</a></li>
-    {% endif %}
-  </ul>
-</nav>
+</div>
 {% endblock %}

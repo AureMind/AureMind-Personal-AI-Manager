@@ -1,19 +1,27 @@
 {% extends 'notes/base.html' %}
 {% load markdown_extras %} {% block title %}{{ note.title }}{% endblock %}
 {% block content %}
-<h2>{{ note.title }}</h2>
-<p class="small text-muted">{{ note.created_at|date:"M d, Y H:i" }}</p>
+<div class="content-wrapper">
+  <div class="card-ui p-4">
+    <h2>{{ note.title }}</h2>
+    <p class="small text-muted">{{ note.created_at|date:"M d, Y H:i" }}</p>
 
-<div>{{ note.content|markdownify|safe }}</div>
+    <hr>
+    
+    <div class="note-content-body">{{ note.content|markdownify|safe }}</div>
 
 
-{% if note.attachment_name %}
-<p>
-  <strong>Attachment:</strong> 
-  <a href="{% url 'notes:serve_attachment' pk=note.pk %}" target="_blank">{{ note.attachment_name }}</a>
-</p>
-{% endif %}
+    {% if note.attachment_name %}
+    <p class="mt-4">
+      <strong>Attachment:</strong> 
+      <a href="{% url 'notes:serve_attachment' pk=note.pk %}" target="_blank">{{ note.attachment_name }}</a>
+    </p>
+    {% endif %}
 
-<a href="{% url 'notes:edit' pk=note.pk %}" class="btn btn-secondary">Edit</a>
-<a href="{% url 'notes:delete' pk=note.pk %}" class="btn btn-danger">Delete</a>
+    <div class="mt-4 pt-3 border-top">
+      <a href="{% url 'notes:edit' pk=note.pk %}" class="btn btn-primary">Edit</a>
+      <a href="{% url 'notes:delete' pk=note.pk %}" class="btn btn-outline-danger">Delete</a>
+    </div>
+  </div>
+</div>
 {% endblock %}

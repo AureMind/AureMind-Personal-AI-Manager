@@ -1,20 +1,39 @@
 {% extends 'notes/base.html' %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="col-md-6 offset-md-3">
-  <h2>Login</h2>
+<div class="login-container">
+  
+  <h2 class="text-center mb-4">Welcome Back</h2>
+  
   <form method="post">
     {% csrf_token %}
     {{ form.non_field_errors }}
+
+    {# Username Field with Icon #}
     <div class="mb-3">
-      <label for="id_username" class="form-label">Username</label>
-      {{ form.username }}
+      <label for="id_username" class="form-label visually-hidden">Username</label>
+      <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          {{ form.username }}
+      </div>
     </div>
-    <div class="mb-3">
-      <label for="id_password" class="form-label">Password</label>
-      {{ form.password }}
+    
+    {# Password Field with Icon #}
+    <div class="mb-4">
+      <label for="id_password" class="form-label visually-hidden">Password</label>
+      <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          {{ form.password }}
+      </div>
     </div>
-    <button type="submit" class="btn btn-primary">Login</button>
+    
+    {# Login Button - Full width for better visual weight #}
+    <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>
   </form>
+
+  <p class="text-center mt-3 mb-0">
+    Don't have an account? <a href="{% url 'notes:register' %}" class="fw-bold">Register here</a>.
+  </p>
+  
 </div>
 {% endblock %}

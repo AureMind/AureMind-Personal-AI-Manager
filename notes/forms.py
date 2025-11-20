@@ -33,7 +33,8 @@ class NoteForm(forms.ModelForm):
         return note
 
 class TimeScheduleForm(forms.ModelForm):
-    # --- The 'parent' field definition has been REMOVED ---
+    # --- FIX: Explicitly define title widget to ensure 'form-control' class is present ---
+    title = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = Task

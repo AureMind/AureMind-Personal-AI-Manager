@@ -1,28 +1,121 @@
 {% extends "notes/base.html" %}
+{% block title %}{% if note %}Edit Note{% else %}Create New Note{% endif %}{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <h2>{% if note %}Edit Note{% else %}Create New Note{% endif %}</h2>
 
+<div class="form-container form-keep-style" style="max-width: 500px; padding: 20px;"> 
+  
   <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.non_field_errors }}
-
-    <div class="mb-3">
-      <label class="form-label">Title</label>
-      {{ form.title }}
+    
+    {# Title Field Area (Renders label + input, but label is hidden by CSS) #}
+    <div class="d-flex justify-content-between align-items-center mb-2 pt-1">
+      <div class="flex-grow-1">
+        {{ form.title }}
+      </div>
+      {# Bell icon (Mimics Keep's pin/bell icon) #}
+      <i class="bi bi-bell-fill text-muted ms-3" style="cursor: pointer; opacity: 0.7; font-size: 1.15rem;"></i>
     </div>
-
-    <div class="mb-3">
-      <label class="form-label">Content</label>
+    
+    {# Content Field Area (Renders label + textarea, but label is hidden by CSS) #}
+    <div class="mb-2">
       {{ form.content }}
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Attachment</label>
-      {{ form.attachment }}
+    {# Hiding attachment field to maintain the minimalist appearance of the Keep quick note UI #}
+    {% if form.attachment %}
+        <div style="display: none;">{{ form.attachment }}</div>
+    {% endif %}
+
+    {# 'Close' button acts as the submit trigger in this minimalistic Keep-style form #}
+    <div class="d-flex justify-content-end align-items-center pt-2">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Close</button>
     </div>
 
-    <button type="submit" class="btn btn-success">Save Note</button>
   </form>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<style>
+/* Resetting input and textarea styles for the Keep look (minimalist borders/padding) */
+.form-keep-style input[type="text"],
+.form-keep-style textarea {
+    /* Makes fields blend into the white card background */
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    line-height: 1.5;
+}
+
+/* Hide the default Django labels, as they interfere with the minimalist layout */
+.form-keep-style .form-label, 
+.form-keep-style label {
+    display: none !important;
+}
+
+/* Style the title input to look like header text */
+.form-keep-style input[type="text"] {
+    font-size: 1.15rem;
+    font-weight: 500;
+}
+
+/* Ensure textarea is dynamic (required for JS autoResize to work) */
+.form-keep-style textarea {
+    resize: none !important; 
+    overflow: hidden !important; 
+    min-height: unset !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formContainer = document.querySelector('.form-keep-style');
+    if (!formContainer) return;
+    
+    // --- Selectors - Use the standard Django IDs for reliability ---
+    // Assuming default IDs for ModelForm fields: id_[field_name]
+    const titleInput = document.getElementById('id_title');
+    const contentTextarea = document.getElementById('id_content');
+    
+    const elements = [
+        { el: titleInput, placeholder: 'Title' },
+        { el: contentTextarea, placeholder: 'Take a note...' }
+    ].filter(item => item.el);
+
+    // 1. Setup Placeholders and Classes
+    elements.forEach(item => {
+        // Ensure Bootstrap classes are present and set the placeholder
+        item.el.classList.add('form-control'); 
+        item.el.setAttribute('placeholder', item.placeholder);
+    });
+    
+    // --- Dynamic Resizing Logic ---
+    if (contentTextarea) {
+        
+        function autoResize() {
+            // Guard clause to prevent errors if element is detached
+            if (!contentTextarea || contentTextarea.offsetParent === null) return;
+            
+            // 1. Reset height
+            contentTextarea.style.height = 'auto'; 
+            
+            // 2. Set minimum height (approx. two lines)
+            const minHeight = 45; 
+            
+            // 3. Set the new height, dynamically growing as content is typed
+            const newHeight = contentTextarea.scrollHeight > minHeight ? contentTextarea.scrollHeight : minHeight;
+            contentTextarea.style.height = newHeight + 'px';
+        }
+
+        // Initial resize (for existing content, e.g., in edit mode)
+        autoResize(); 
+        
+        // Bind input/resize events for dynamic height adjustment
+        contentTextarea.addEventListener('input', autoResize);
+        window.addEventListener('resize', autoResize);
+    }
+});
+</script>
+{% endblock extra_js %}
